@@ -1,0 +1,7 @@
+[submodule "_lib/ubDistBuild"]
+	path = _lib/ubDistBuild
+	url = git@github.com:soaringDistributions/ubDistBuild.git
+	shallow = true
+[submodule "_lib/ubiquitous_bash"]
+	path = _lib/ubiquitous_bash
+	url = git@github.com:mirage335-colossus/ubiquitous_bash.git
