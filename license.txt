@@ -16,3 +16,17 @@ along with this program; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 All files in this folder and subfolders, unless explicitly stated otherwise or copyrighted by other authors, are copyrighted by Soaring Distributions LLC as described above.
+
+
+Any files that may be regarded as part of any separate 'ubdist_puddleJumper' project or similar project are a derivative project of ubDistBuild inheriting the same licensing terms, with the same implied if not stated exception that this license only applies to files of that or those such projects, and not to files merely generated as output of these projects, excepting the inclusion of licensed project files remaining under the license. The creation of a 'fork' of the 'ubDistBuild' project with a new directory name (eg. 'ubdist-dummy') does not necessarily constitute any implied or otherwise reassignment or relicensing. 
+
+
+Such legal statements as the following remain in effect in full and do apply:
+
+Attempts to achieve non-inclusive technology use outcomes by legal interpretation through means of reinterpretation by norms, 
+precedent, understanding, etc, that did not enjoy widespread respected concensus among ethical lawyers by the year 2016, is 
+CONTRARY to the INTENT of both Soaring Distributions LLC and of manager mirage335 .
+This text is intended to effectively PROHIBIT attempts to reintroduce liability through reinterpretation of this text or 
+interpretation within any societal context. The intended outcome is to allow all inclusive use of this technology, and any legal 
+interpretation based on working backwards from a desired outcome would only be respecting the plain meaning, reasonableness, or 
+lack of situational absurdity, if the outcome was conclusive and consistent with, as stated above, prior legal best practice.
