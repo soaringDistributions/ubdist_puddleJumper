@@ -71,7 +71,7 @@ CZXWXcRMTo8EmM8i4d
 	echo '###################################################################################################'
 	echo '###################################################################################################'
 	
-	
+	! _openChRoot && _messagePlain_bad 'fail: openChroot' && _messageFAIL
 
 	_wget_githubRelease "mirage335-colossus/extendedInterface" "internal" "extIface.exe"
 	sudo -n mv -f extIface.exe "$globalVirtFS"/home/user/core/installations/
@@ -80,7 +80,7 @@ CZXWXcRMTo8EmM8i4d
 	_wget_githubRelease "soaringDistributions/ubDistBuild" "internal" "ubDistBuild.exe"
 	sudo -n mv -f ubDistBuild.exe "$globalVirtFS"/home/user/core/installations/
 	
-	
+	! _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
 	
 	echo '###################################################################################################'
 	echo '###################################################################################################'
