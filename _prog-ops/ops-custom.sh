@@ -92,10 +92,10 @@ CZXWXcRMTo8EmM8i4d
 	
 	# DANGER: Though it might be nice to have a copy of Docker images used by researchEngine, it is NOT acceptable to have any unnecessary network services on a puddleJumper .
 	#_messageNormal '***** ***** ***** ***** ***** custom: researchEngine'
-	#_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _setup_researchEngine'
+	#_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _setup_researchEngine'
 	
 	_messageNormal '***** ***** ***** ***** ***** custom: iconArt'
-	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/iconArt ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _fetch_iconArt'
+	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/iconArt ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _fetch_iconArt'
 
 
 	! _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
@@ -108,7 +108,7 @@ _custom-expand() {
 	_messageNormal '_custom-expand: dd'
 
 	# ATTENTION: Expand ONLY the additional amount needed for custom additions . This is APPENDED .
-	! dd if=/dev/zero bs=1M count=15000 >> "$scriptLocal"/vm.img && _messageFAIL
+	! dd if=/dev/zero bs=1M count=25000 >> "$scriptLocal"/vm.img && _messageFAIL
 
 	# Alternatively, it may be possible, but STRONGLY DISCOURAGED, to pad the file to a size. This, however, assumes the upstream 'ubdist/OS', etc, has not unexpectedly grown larger, which is still a VERY BAD assumption.
 	# https://unix.stackexchange.com/questions/196715/how-to-pad-a-file-to-a-desired-size
