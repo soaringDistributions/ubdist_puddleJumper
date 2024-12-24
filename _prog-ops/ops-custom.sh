@@ -31,6 +31,17 @@ _custom() {
 	! _openChRoot && _messageFAIL
 	
 	#sudo -n apt-get -y install vsftpd
+	if ! sudo -n ls "$globalVirtFS"/home/user/core/infrastructure/puddleJumper
+	then
+		_chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'mkdir -p /home/user/core/'infrastructure' ; cd /home/user/core/'infrastructure' ; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest clone --recursive --depth 1 git@github.com:'mirage335-gizmos'/'puddleJumper'.git'
+		if ! sudo -n ls "$globalVirtFS"/home/user/core/infrastructure/puddleJumper
+		then
+			_messagePlain_bad 'bad: FAIL: missing: '/home/user/core/infrastructure/puddleJumper
+			_messageFAIL
+			_stop 1
+			return 1
+		fi
+	fi
 	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/puddleJumper ; ./ubiquitous_bash.sh _install'
 	
 	
