@@ -85,6 +85,10 @@ CZXWXcRMTo8EmM8i4d
 	
 	! _openChRoot && _messagePlain_bad 'fail: openChroot' && _messageFAIL
 
+	_wget_githubRelease "mirage335-gizmos/pumpCompanion" "internal" "pumpCompanion.exe"
+	sudo -n mv -f pumpCompanion.exe "$globalVirtFS"/home/user/core/installations/
+	
+
 	_wget_githubRelease "mirage335-colossus/extendedInterface" "internal" "extIface.exe"
 	sudo -n mv -f extIface.exe "$globalVirtFS"/home/user/core/installations/
 	
