@@ -827,8 +827,17 @@ _create_ubDistBuild-rotten_install() {
 	
 	
 	#'linux-headers*'
-	_chroot apt-get -y remove 'linux-image*'
+	#_chroot apt-get -y remove 'linux-image*'
+
+    _messagePlain_probe_cmd _chroot apt-get -y remove 'linux-image*'
+    _messagePlain_probe_cmd _chroot apt-get -y purge 'linux-image*'
+    #_messagePlain_probe_cmd _chroot apt-get autoremove -y --purge
+
+    _messagePlain_probe_cmd _chroot dpkg --get-selections | grep 'linux-image'
+
 	! _chroot /rotten_install.sh _custom_kernel && _messageFAIL
+
+	_messagePlain_probe_cmd _chroot apt-get -y install -f
 	
 	# Mainline kernel will be available from usual "core/installations" folders , however, is no longer booted by default, due to apparently frequent regressions (not just out-of-tree module compatibility issues but in-tree issues) with mainline kernels acceptably recent (ie. latest stable branch still apparently has too many regressions) .
 	#'linux-headers*mainline'
@@ -1043,7 +1052,7 @@ _create_ubDistBuild-rotten_install-core() {
 
 
 
-	_chroot find /home/user/core/installations /home/user/core/infrastructure -not \( -path \*.git\* -prune \) | grep -v '_local/h' | sudo -n tee "$globalVirtFS"/coreReport > /dev/null
+	_chroot find /home/user/core/installations /home/user/core/infrastructure /home/user/core/variant /home/user/core/info -not \( -path \*.git\* -prune \) | grep -v '_local/h' | sudo -n tee "$globalVirtFS"/coreReport > /dev/null
 	sudo -n cp -f "$globalVirtFS"/coreReport "$scriptLocal"/coreReport
 	sudo -n chown "$USER":"$USER" "$scriptLocal"/coreReport
 
@@ -2306,20 +2315,118 @@ _join() {
 }
 
 
+# NOTICE: Most well tested and expected most reliable .
+_ubDistBuild_split-tail_procedure() {
+	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	local currentIteration
+	for currentIteration in $(seq -w 0 50)
+	do
+		[[ -s ./"$1" ]] && [[ -e ./"$1" ]] && tail -c 1997378560 "$1" > "$1".part"$currentIteration" && truncate -s -1997378560 "$1"
+	done
+}
+
+# Expected fastest.
+# ATTRIBUTION-AI: ChatGPT o1 2024-01-14 
+_ubDistBuild_split_reflink() {
+    local inputFile=""$1""
+    local chunkSize=1997378560  # ~1.86 GB
+    local currentIteration=0
+
+    # Sanity check
+    [[ ! -e "$inputFile" ]] && return 1
+
+    while [[ -s "$inputFile" ]]; do
+        local fileSize
+        fileSize="$(stat -c%s "$inputFile")"
+
+        # Zero-pad the iteration index (2 digits)
+        local iterationStr
+        iterationStr="$(printf "%02d" "$currentIteration")"
+
+        # If the file is smaller than (or equal to) chunkSize, then this is our final chunk
+        if [[ $fileSize -le $chunkSize ]]; then
+            cp --reflink=always "$inputFile" "${inputFile}.part${iterationStr}"
+            rm -f "$inputFile"
+            break
+        else
+            # 1. Make a reflink copy of the whole file
+            cp --reflink=always "$inputFile" "${inputFile}.part${iterationStr}"
+
+            # 2. Punch out everything except the last $chunkSize bytes in the new part file
+            fallocate --punch-hole --offset 0 --length $((fileSize - chunkSize)) \
+                      "${inputFile}.part${iterationStr}"
+
+            # 3. Truncate the *original* file by the chunk size from the end
+            truncate -s -"$chunkSize" "$inputFile"
+        fi
+
+        ((currentIteration++))
+    done
+}
+
+# Expected to avoid repeatedly reading most of file through 'tail', however, not as fast as near-instant sector mapping.
+# ATTRIBUTION-AI: ChatGPT o1 2024-01-14 
+_ubDistBuild_split_dd() {
+	    local functionEntryPWD="$PWD"
+    cd "$scriptLocal" || exit 1
+
+    # Size of each chunk in bytes.
+    local chunkSize=1997378560
+    local currentIteration
+
+    for currentIteration in $(seq -w 0 50); do
+        # Make sure the file still exists and is non-empty.
+        if [[ -s "$1" && -e "$1" ]]; then
+            # Get the current file size.
+            local fileSize
+            fileSize=$(stat -c %s ""$1"")
+
+            # If the file is already smaller than the chunk size, just move all of it.
+            if (( fileSize <= chunkSize )); then
+                mv "$1" ""$1".part${currentIteration}"
+            else
+                # dd can seek directly to the end of the file. We skip all bytes except the last chunkSize.
+                local skipBytes=$(( fileSize - chunkSize ))
+
+                # Copy the last chunk into a new file.
+                dd if=""$1"" \
+                   of=""$1".part${currentIteration}" \
+                   bs=1 \
+                   skip="${skipBytes}" \
+                   count="${chunkSize}" \
+                   status=none
+
+                # Truncate the original file, removing the last chunk.
+                truncate -s "${skipBytes}" ""$1""
+            fi
+        fi
+    done
+
+    rm -f "$1"
+    cd "$functionEntryPWD" || exit 1
+}
+
+_ubDistBuild_split_procedure() {
+	_ubDistBuild_split_reflink "$@"
+}
+
+
 _ubDistBuild_split() {
 	local functionEntryPWD
 	functionEntryPWD="$PWD"
 
 
 	cd "$scriptLocal"
-	#split -b 1997378560 -d package_image.tar.flx package_image.tar.flx.part
+	##split -b 1997378560 -d package_image.tar.flx package_image.tar.flx.part
 
-	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
-	local currentIteration
-	for currentIteration in $(seq -w 0 50)
-	do
-		[[ -s ./package_image.tar.flx ]] && [[ -e ./package_image.tar.flx ]] && tail -c 1997378560 package_image.tar.flx > package_image.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image.tar.flx
-	done
+	## https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	#local currentIteration
+	#for currentIteration in $(seq -w 0 50)
+	#do
+		#[[ -s ./package_image.tar.flx ]] && [[ -e ./package_image.tar.flx ]] && tail -c 1997378560 package_image.tar.flx > package_image.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image.tar.flx
+	#done
+
+	_ubDistBuild_split_procedure ./package_image.tar.flx
 
 	rm -f ./package_image.tar.flx
 
@@ -2333,14 +2440,16 @@ _ubDistBuild_split_beforeBoot() {
 
 
 	cd "$scriptLocal"
-	#split -b 1997378560 -d package_image_beforeBoot.tar.flx package_image_beforeBoot.tar.flx.part
+	##split -b 1997378560 -d package_image_beforeBoot.tar.flx package_image_beforeBoot.tar.flx.part
 
-	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
-	local currentIteration
-	for currentIteration in $(seq -w 0 50)
-	do
-		[[ -s ./package_image_beforeBoot.tar.flx ]] && [[ -e ./package_image_beforeBoot.tar.flx ]] && tail -c 1997378560 package_image_beforeBoot.tar.flx > package_image_beforeBoot.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image_beforeBoot.tar.flx
-	done
+	## https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	#local currentIteration
+	#for currentIteration in $(seq -w 0 50)
+	#do
+		#[[ -s ./package_image_beforeBoot.tar.flx ]] && [[ -e ./package_image_beforeBoot.tar.flx ]] && tail -c 1997378560 package_image_beforeBoot.tar.flx > package_image_beforeBoot.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image_beforeBoot.tar.flx
+	#done
+
+	_ubDistBuild_split_procedure ./package_image_beforeBoot.tar.flx
 
 	rm -f ./package_image_beforeBoot.tar.flx
 
@@ -2354,14 +2463,16 @@ _ubDistBuild_split_before_noBoot() {
 
 
 	cd "$scriptLocal"
-	#split -b 1997378560 -d package_image_before_noBoot.tar.flx package_image_before_noBoot.tar.flx.part
+	##split -b 1997378560 -d package_image_before_noBoot.tar.flx package_image_before_noBoot.tar.flx.part
 
-	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
-	local currentIteration
-	for currentIteration in $(seq -w 0 50)
-	do
-		[[ -s ./package_image_before_noBoot.tar.flx ]] && [[ -e ./package_image_before_noBoot.tar.flx ]] && tail -c 1997378560 package_image_before_noBoot.tar.flx > package_image_before_noBoot.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image_before_noBoot.tar.flx
-	done
+	## https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	#local currentIteration
+	#for currentIteration in $(seq -w 0 50)
+	#do
+		#[[ -s ./package_image_before_noBoot.tar.flx ]] && [[ -e ./package_image_before_noBoot.tar.flx ]] && tail -c 1997378560 package_image_before_noBoot.tar.flx > package_image_before_noBoot.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image_before_noBoot.tar.flx
+	#done
+
+	_ubDistBuild_split_procedure ./package_image_before_noBoot.tar.flx
 
 	rm -f ./package_image_before_noBoot.tar.flx
 
@@ -2374,15 +2485,17 @@ _ubDistBuild_split-live() {
 
 
 	cd "$scriptLocal"
-	#split -b 1997378560 -d vm-live.iso vm-live.iso.part
+	##split -b 1997378560 -d vm-live.iso vm-live.iso.part
 
 
-	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
-	local currentIteration
-	for currentIteration in $(seq -w 0 50)
-	do
-		[[ -s ./vm-live.iso ]] && [[ -e ./vm-live.iso ]] && tail -c 1997378560 vm-live.iso > vm-live.iso.part"$currentIteration" && truncate -s -1997378560 vm-live.iso
-	done
+	## https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	#local currentIteration
+	#for currentIteration in $(seq -w 0 50)
+	#do
+		#[[ -s ./vm-live.iso ]] && [[ -e ./vm-live.iso ]] && tail -c 1997378560 vm-live.iso > vm-live.iso.part"$currentIteration" && truncate -s -1997378560 vm-live.iso
+	#done
+
+	_ubDistBuild_split_procedure ./vm-live.iso
 
 	rm -f ./vm-live.iso
 
@@ -2396,12 +2509,14 @@ _ubDistBuild_split-rootfs() {
 
 	cd "$scriptLocal"
 
-	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
-	local currentIteration
-	for currentIteration in $(seq -w 0 50)
-	do
-		[[ -s ./package_rootfs.tar.flx ]] && [[ -e ./package_rootfs.tar.flx ]] && tail -c 1997378560 package_rootfs.tar.flx > package_rootfs.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_rootfs.tar.flx
-	done
+	## https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	#local currentIteration
+	#for currentIteration in $(seq -w 0 50)
+	#do
+		#[[ -s ./package_rootfs.tar.flx ]] && [[ -e ./package_rootfs.tar.flx ]] && tail -c 1997378560 package_rootfs.tar.flx > package_rootfs.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_rootfs.tar.flx
+	#done
+
+	_ubDistBuild_split_procedure ./package_rootfs.tar.flx
 
 	rm -f ./package_rootfs.tar.flx
 
@@ -2439,6 +2554,40 @@ _upload_ubDistBuild_custom() {
 	# TODO
 	
 	true
+}
+
+
+_custom_report() {
+    local functionEntryPWD
+    functionEntryPWD="$PWD"
+    
+    echo
+    echo 'init: _custom_report'
+    echo
+
+	! _messagePlain_probe_cmd _openChRoot && _messagePlain_bad 'fail: openChroot' && _messageFAIL
+
+	_messageNormal 'init: _custom_report: customReport, cronUserReport, cronRootReport'
+
+    _chroot find /etc /var/lib/docker | sudo -n tee "$globalVirtFS"/customReport > /dev/null
+    sudo -n cp -f "$globalVirtFS"/customReport "$scriptLocal"/customReport
+    sudo -n chown "$USER":"$USER" "$scriptLocal"/customReport
+
+	_chroot sudo -n -u user bash -c "crontab -l" | sudo -n tee "$globalVirtFS"/cronUserReport > /dev/null
+    sudo -n cp -f "$globalVirtFS"/cronUserReport "$scriptLocal"/cronUserReport
+	_chroot sudo -n -u root bash -c "crontab -l" | sudo -n tee "$globalVirtFS"/cronRootReport > /dev/null
+	sudo -n cp -f "$globalVirtFS"/cronRootReport "$scriptLocal"/cronRootReport
+
+    _messagePlain_nominal 'PASS'
+    _messagePlain_good 'good: success: _custom_report: customReport, cronUserReport, cronRootReport'
+	
+	! _messagePlain_probe_cmd _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
+
+    cd "$functionEntryPWD"
+    echo
+    echo '          PASS'
+    echo '          good: success: _custom_report'
+    echo
 }
 
 
@@ -2549,7 +2698,7 @@ _zSpecial_report_procedure() {
 	
 	#if [[ ! -e "$globalVirtFS"/coreReport ]]
 	#then
-		_chroot find /home/user/core/installations /home/user/core/infrastructure -not \( -path \*.git\* -prune \) | grep -v '_local/h' | sudo -n tee "$globalVirtFS"/coreReport > /dev/null
+		_chroot find /home/user/core/installations /home/user/core/infrastructure /home/user/core/variant /home/user/core/info -not \( -path \*.git\* -prune \) | grep -v '_local/h' | sudo -n tee "$globalVirtFS"/coreReport > /dev/null
 		sudo -n cp -f "$globalVirtFS"/coreReport "$scriptLocal"/coreReport
 		sudo -n chown "$USER":"$USER" "$scriptLocal"/coreReport
 	#fi

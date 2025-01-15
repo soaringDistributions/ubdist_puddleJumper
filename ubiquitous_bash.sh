@@ -36,7 +36,7 @@ _ub_cksum_special_derivativeScripts_contents() {
 #export ub_setScriptChecksum_disable='true'
 ( [[ -e "$0".nck ]] || [[ "${BASH_SOURCE[0]}" != "${0}" ]] || [[ "$1" == '--profile' ]] || [[ "$1" == '--script' ]] || [[ "$1" == '--call' ]] || [[ "$1" == '--return' ]] || [[ "$1" == '--devenv' ]] || [[ "$1" == '--shell' ]] || [[ "$1" == '--bypass' ]] || [[ "$1" == '--parent' ]] || [[ "$1" == '--embed' ]] || [[ "$1" == '--compressed' ]] || [[ "$0" == "/bin/bash" ]] || [[ "$0" == "-bash" ]] || [[ "$0" == "/usr/bin/bash" ]] || [[ "$0" == "bash" ]] ) && export ub_setScriptChecksum_disable='true'
 export ub_setScriptChecksum_header='2591634041'
-export ub_setScriptChecksum_contents='650289412'
+export ub_setScriptChecksum_contents='3821640453'
 
 # CAUTION: Symlinks may cause problems. Disable this test for such cases if necessary.
 # WARNING: Performance may be crucial here.
@@ -645,6 +645,65 @@ _____special_live_dent_restore() {
 
 
 #Override (Program).
+
+
+# Attempts to reduce adding the necessary Debian packages, from ~5minutes , to much less . However, in practice, '_getMinimal_cloud' , is already very minimal.
+# Relies on several assumptions:
+#  _setupUbiquitous   has definitely always already been called
+#  apt-fast   either is or is not available, hardcoded
+
+
+
+
+_getMinimal_cloud_ubDistBuild_noBoot_backend() {
+    _messagePlain_probe "$@"
+    sudo -n env XZ_OPT="-T0" DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -q --install-recommends -y "$@"
+}
+
+_getMinimal_cloud_ubDistBuild_noBoot() {
+    echo 'APT::AutoRemove::RecommendsImportant "true";
+APT::AutoRemove::SuggestsImportant "true";' | sudo -n tee /etc/apt/apt.conf.d/99autoremove-recommends > /dev/null
+
+    #dpkg --add-architecture i386
+    #apt-get update
+    #libc6:i386 lib32z1
+    
+    _getMinimal_cloud_ubDistBuild_noBoot_backend --reinstall wget
+
+    ##xz btrfs-tools grub-mkstandalone mkfs.vfat mkswap mmd mcopy mksquashfs
+    #gpg pigz curl gdisk lz4 mawk jq gawk build-essential autoconf pkg-config bsdutils findutils patch tar gzip bzip2 sed lua-lpeg axel aria2 gh rsync pv expect libfuse2 udftools debootstrap cifs-utils dos2unix xxd debhelper p7zip nsis jp2a btrfs-progs btrfs-compsize zstd zlib1g coreutils util-linux kpartx openssl growisofs udev gdisk parted bc e2fsprogs xz-utils libreadline8 mkisofs genisoimage byobu xorriso squashfs-tools grub-pc-bin grub-efi-amd64-bin grub-common mtools dosfstools fdisk cloud-guest-utils
+    ##dnsutils bind9-dnsutils bison libelf-dev elfutils flex libncurses-dev libudev-dev dwarves pahole cmake sockstat liblinear4 liblua5.3-0 nmap nmap-common socat dwarves pahole libssl-dev cpio libgtk2.0-0 libwxgtk3.0-gtk3-0v5 wipe iputils-ping nilfs-tools python3 sg3-utils cryptsetup php
+    ##qemu-system-x86
+    _getMinimal_cloud_ubDistBuild_noBoot_backend gpg pigz curl gdisk lz4 mawk jq gawk build-essential autoconf pkg-config bsdutils findutils patch tar gzip bzip2 sed lua-lpeg axel aria2 gh rsync pv expect libfuse2 udftools debootstrap cifs-utils dos2unix xxd debhelper p7zip nsis jp2a btrfs-progs btrfs-compsize zstd zlib1g coreutils util-linux kpartx openssl growisofs udev gdisk parted bc e2fsprogs xz-utils libreadline8 mkisofs genisoimage byobu xorriso squashfs-tools grub-pc-bin grub-efi-amd64-bin grub-common mtools dosfstools fdisk cloud-guest-utils
+
+    _messagePlain_probe apt-get remove --autoremove -y plasma-discover
+    sudo -n env XZ_OPT="-T0" DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" remove --autoremove -y plasma-discover
+
+    _messagePlain_probe _custom_splice_opensslConfig
+	_here_opensslConfig_legacy | sudo -n tee /etc/ssl/openssl_legacy.cnf > /dev/null 2>&1
+
+    if ! sudo -n grep 'openssl_legacy' /etc/ssl/openssl.cnf > /dev/null 2>&1
+    then
+        sudo -n cp -f /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf.orig
+        echo '
+
+
+.include = /etc/ssl/openssl_legacy.cnf
+
+' | sudo -n cat /etc/ssl/openssl.cnf.orig - | sudo -n tee /etc/ssl/openssl.cnf > /dev/null 2>&1
+    fi
+
+    true
+}
+# WARNING: Forces all workflows to use this specialized function by default . Beware the possibility of external assumptions breaking very long build jobs.
+#_getMinimal_cloud() {
+    #_getMinimal_cloud_ubDistBuild_noBoot
+#}
+
+
+
+
+
 
 #Override, cygwin.
 
@@ -37458,6 +37517,153 @@ _test_h1060p() {
 }
 
 
+# WARNING: May be untested.
+# TODO: Detect 'gpd' device, ceasing if not a 'gpd' device.
+# TODO: Temperature sensing may be untested.
+
+# https://aur.archlinux.org/cgit/aur.git/tree/gpdfanspeed?h=gpd-fan-driver-dkms-git
+# https://github.com/Cryolitia/gpd-fan-driver
+
+# ATTENTION
+#_chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest pull'
+#_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; ./ubiquitous_bash.sh _gpdWinMini2024_8840U_fan_install'
+_gpdWinMini2024_8840U_fan_install() {
+    # DUBIOUS . May be untested.
+    #( crontab -l ; echo '#*/1 * * * * sleep 0.1 ; sleep 210 ; /home/user/core/infrastructure/ubiquitous_bash/ubiquitous_bash.sh _gpdWinMini2024_8840U_fan_cron > /dev/null 2>&1' ) | crontab -
+
+    if ! crontab -l | grep _gpdWinMini2024_8840U_fan_cron > /dev/null
+	then
+        (
+            crontab -l
+            cat << 'CZXWXcRMTo8EmM8i4d'
+*/1 * * * * sleep 0.1 ; sleep 210 ; /home/user/core/infrastructure/ubiquitous_bash/ubiquitous_bash.sh _gpdWinMini2024_8840U_fan_cron > /dev/null 2>&1
+CZXWXcRMTo8EmM8i4d
+        ) | crontab -
+	fi
+}
+
+
+_gpdWinMini2024_8840U_fan_cfg-write() {
+	#echo "options gpd-fan fan_control=1" | sudo -n tee /etc/modprobe.d/gpd_fan.conf
+    true
+}
+
+_gpdWinMini2024_8840U_fan_cfg-modprobe() {
+	sudo -n modprobe -rv gpd-fan
+	sudo -n modprobe -v gpd-fan
+}
+
+_gpdWinMini2024_8840U_fan_cfg() {
+	#echo watchdog 120 | sudo -n tee /proc/acpi/gpd/fan
+    true
+}
+
+# cron recommended
+#*/1 * * * * sleep 0.1 ; /home/user/.ubcore/ubcore.sh _gpdWinMini2024_8840U_hardware_cron > /dev/null 2>&1
+#*/1 * * * * sleep 0.1 ; /home/user/core/infrastructure/ubiquitous_bash/ubiquitous_bash.sh _gpdWinMini2024_8840U_hardware_cron > /dev/null 2>&1
+_gpdWinMini2024_8840U_fan_cron() {
+	#! sudo -n dmidecode -s system-family | grep 'gpdWinMini2024_8840U' && return 0
+    #! [[ -e /sys/devices/platform/gpd_fan ]] && return 0
+	
+	_gpdWinMini2024_8840U_fan
+	
+	return 0
+}
+
+# cron recommended
+#*/1 * * * * sleep 0.1 ; /home/user/.ubcore/ubiquitous_bash/ubcore.sh _gpdWinMini2024_8840U_fan > /dev/null 2>&1
+#*/1 * * * * sleep 0.1 ; /home/user/core/infrastructure/ubiquitous_bash/ubiquitous_bash.sh _gpdWinMini2024_8840U_hardware_cron > /dev/null 2>&1
+# https://github.com/Cryolitia/gpd-fan-driver
+_gpdWinMini2024_8840U_fan() {
+	_gpdWinMini2024_8840U_fan_cfg
+	
+    # ATTENTION: TODO: WARNING: May be untested.
+	local currentTemp_coretemp0
+	read currentTemp_coretemp0 < /sys/devices/platform/coretemp.0/hwmon/hwmon4/temp1_input
+
+    if [[ -e "$HOME"/fanFast ]]
+    then
+        # 0: disable (full speed)
+        # 1: manual
+        # 2: auto
+        echo 2 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1_enable
+        return 0
+    fi
+
+    if [[ -e "$HOME"/fanIdle ]]
+    then
+        # 0: disable (full speed)
+        # 1: manual
+        # 2: auto
+        echo 1 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1_enable
+
+        echo 92 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1 && return 0
+
+        return 0
+    fi
+
+    #Suggested fan curve:
+    #35% 50degC
+    #38% 65degC
+    #38% 70degC
+    #100% 80degC
+    # range: 0-255
+
+    # 0: disable (full speed)
+    # 1: manual
+    # 2: auto
+    echo 1 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1_enable
+	
+    #35% 50degC
+	[[ "$currentTemp_coretemp0" -lt 50000 ]] && echo 92 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1 && return 0
+
+    [[ "$currentTemp_coretemp0" -lt 53000 ]] && echo 93 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1 && return 0
+    [[ "$currentTemp_coretemp0" -lt 60000 ]] && echo 94 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1 && return 0
+    [[ "$currentTemp_coretemp0" -lt 63000 ]] && echo 95 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1 && return 0
+
+    #38% 65degC
+	[[ "$currentTemp_coretemp0" -lt 65000 ]] && echo 97 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1 && return 0
+
+    #38% 70degC
+    [[ "$currentTemp_coretemp0" -lt 70000 ]] && echo 97 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1 && return 0
+
+    #100% 80degC
+    [[ "$currentTemp_coretemp0" -lt 80000 ]] && echo 255 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1 && return 0
+}
+
+_gpdWinMini2024_8840U_idle() {
+	_gpdWinMini2024_8840U_fan_cfg
+	
+	while true
+	do
+		echo powersave | sudo -n tee /sys/devices/system/cpu/cpufreq/*/scaling_governor
+
+        rm -f "$HOME"/fanFast
+        rm -f "$HOME"/fanIdle
+
+        echo > "$HOME"/fanIdle
+		
+        # 0: disable (full speed)
+        # 1: manual
+        # 2: auto
+		echo 1 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1_enable
+
+        echo 92 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1 && return 0
+		
+		sleep 45
+	done
+}
+
+_gpdWinMini2024_8840U_normal() {
+	echo schedutil | sudo -n tee /sys/devices/system/cpu/cpufreq/*/scaling_governor
+
+    rm -f "$HOME"/fanFast
+    rm -f "$HOME"/fanIdle
+
+    echo 2 | sudo -n tee /sys/devices/platform/gpd_fan/hwmon/hwmon*/pwm1_enable
+}
+
+
 # ATTRIBUTION-AI: ChatGPT o1 2024-12-24 .
 _live_hash-getRootBlkDevice()  {
     _if_cygwin && _stop
@@ -48009,8 +48215,17 @@ _create_ubDistBuild-rotten_install() {
 	
 	
 	#'linux-headers*'
-	_chroot apt-get -y remove 'linux-image*'
+	#_chroot apt-get -y remove 'linux-image*'
+
+    _messagePlain_probe_cmd _chroot apt-get -y remove 'linux-image*'
+    _messagePlain_probe_cmd _chroot apt-get -y purge 'linux-image*'
+    #_messagePlain_probe_cmd _chroot apt-get autoremove -y --purge
+
+    _messagePlain_probe_cmd _chroot dpkg --get-selections | grep 'linux-image'
+
 	! _chroot /rotten_install.sh _custom_kernel && _messageFAIL
+
+	_messagePlain_probe_cmd _chroot apt-get -y install -f
 	
 	# Mainline kernel will be available from usual "core/installations" folders , however, is no longer booted by default, due to apparently frequent regressions (not just out-of-tree module compatibility issues but in-tree issues) with mainline kernels acceptably recent (ie. latest stable branch still apparently has too many regressions) .
 	#'linux-headers*mainline'
@@ -48225,7 +48440,7 @@ _create_ubDistBuild-rotten_install-core() {
 
 
 
-	_chroot find /home/user/core/installations /home/user/core/infrastructure -not \( -path \*.git\* -prune \) | grep -v '_local/h' | sudo -n tee "$globalVirtFS"/coreReport > /dev/null
+	_chroot find /home/user/core/installations /home/user/core/infrastructure /home/user/core/variant /home/user/core/info -not \( -path \*.git\* -prune \) | grep -v '_local/h' | sudo -n tee "$globalVirtFS"/coreReport > /dev/null
 	sudo -n cp -f "$globalVirtFS"/coreReport "$scriptLocal"/coreReport
 	sudo -n chown "$USER":"$USER" "$scriptLocal"/coreReport
 
@@ -49488,20 +49703,118 @@ _join() {
 }
 
 
+# NOTICE: Most well tested and expected most reliable .
+_ubDistBuild_split-tail_procedure() {
+	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	local currentIteration
+	for currentIteration in $(seq -w 0 50)
+	do
+		[[ -s ./"$1" ]] && [[ -e ./"$1" ]] && tail -c 1997378560 "$1" > "$1".part"$currentIteration" && truncate -s -1997378560 "$1"
+	done
+}
+
+# Expected fastest.
+# ATTRIBUTION-AI: ChatGPT o1 2024-01-14 
+_ubDistBuild_split_reflink() {
+    local inputFile=""$1""
+    local chunkSize=1997378560  # ~1.86 GB
+    local currentIteration=0
+
+    # Sanity check
+    [[ ! -e "$inputFile" ]] && return 1
+
+    while [[ -s "$inputFile" ]]; do
+        local fileSize
+        fileSize="$(stat -c%s "$inputFile")"
+
+        # Zero-pad the iteration index (2 digits)
+        local iterationStr
+        iterationStr="$(printf "%02d" "$currentIteration")"
+
+        # If the file is smaller than (or equal to) chunkSize, then this is our final chunk
+        if [[ $fileSize -le $chunkSize ]]; then
+            cp --reflink=always "$inputFile" "${inputFile}.part${iterationStr}"
+            rm -f "$inputFile"
+            break
+        else
+            # 1. Make a reflink copy of the whole file
+            cp --reflink=always "$inputFile" "${inputFile}.part${iterationStr}"
+
+            # 2. Punch out everything except the last $chunkSize bytes in the new part file
+            fallocate --punch-hole --offset 0 --length $((fileSize - chunkSize)) \
+                      "${inputFile}.part${iterationStr}"
+
+            # 3. Truncate the *original* file by the chunk size from the end
+            truncate -s -"$chunkSize" "$inputFile"
+        fi
+
+        ((currentIteration++))
+    done
+}
+
+# Expected to avoid repeatedly reading most of file through 'tail', however, not as fast as near-instant sector mapping.
+# ATTRIBUTION-AI: ChatGPT o1 2024-01-14 
+_ubDistBuild_split_dd() {
+	    local functionEntryPWD="$PWD"
+    cd "$scriptLocal" || exit 1
+
+    # Size of each chunk in bytes.
+    local chunkSize=1997378560
+    local currentIteration
+
+    for currentIteration in $(seq -w 0 50); do
+        # Make sure the file still exists and is non-empty.
+        if [[ -s "$1" && -e "$1" ]]; then
+            # Get the current file size.
+            local fileSize
+            fileSize=$(stat -c %s ""$1"")
+
+            # If the file is already smaller than the chunk size, just move all of it.
+            if (( fileSize <= chunkSize )); then
+                mv "$1" ""$1".part${currentIteration}"
+            else
+                # dd can seek directly to the end of the file. We skip all bytes except the last chunkSize.
+                local skipBytes=$(( fileSize - chunkSize ))
+
+                # Copy the last chunk into a new file.
+                dd if=""$1"" \
+                   of=""$1".part${currentIteration}" \
+                   bs=1 \
+                   skip="${skipBytes}" \
+                   count="${chunkSize}" \
+                   status=none
+
+                # Truncate the original file, removing the last chunk.
+                truncate -s "${skipBytes}" ""$1""
+            fi
+        fi
+    done
+
+    rm -f "$1"
+    cd "$functionEntryPWD" || exit 1
+}
+
+_ubDistBuild_split_procedure() {
+	_ubDistBuild_split_reflink "$@"
+}
+
+
 _ubDistBuild_split() {
 	local functionEntryPWD
 	functionEntryPWD="$PWD"
 
 
 	cd "$scriptLocal"
-	#split -b 1997378560 -d package_image.tar.flx package_image.tar.flx.part
+	##split -b 1997378560 -d package_image.tar.flx package_image.tar.flx.part
 
-	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
-	local currentIteration
-	for currentIteration in $(seq -w 0 50)
-	do
-		[[ -s ./package_image.tar.flx ]] && [[ -e ./package_image.tar.flx ]] && tail -c 1997378560 package_image.tar.flx > package_image.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image.tar.flx
-	done
+	## https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	#local currentIteration
+	#for currentIteration in $(seq -w 0 50)
+	#do
+		#[[ -s ./package_image.tar.flx ]] && [[ -e ./package_image.tar.flx ]] && tail -c 1997378560 package_image.tar.flx > package_image.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image.tar.flx
+	#done
+
+	_ubDistBuild_split_procedure ./package_image.tar.flx
 
 	rm -f ./package_image.tar.flx
 
@@ -49515,14 +49828,16 @@ _ubDistBuild_split_beforeBoot() {
 
 
 	cd "$scriptLocal"
-	#split -b 1997378560 -d package_image_beforeBoot.tar.flx package_image_beforeBoot.tar.flx.part
+	##split -b 1997378560 -d package_image_beforeBoot.tar.flx package_image_beforeBoot.tar.flx.part
 
-	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
-	local currentIteration
-	for currentIteration in $(seq -w 0 50)
-	do
-		[[ -s ./package_image_beforeBoot.tar.flx ]] && [[ -e ./package_image_beforeBoot.tar.flx ]] && tail -c 1997378560 package_image_beforeBoot.tar.flx > package_image_beforeBoot.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image_beforeBoot.tar.flx
-	done
+	## https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	#local currentIteration
+	#for currentIteration in $(seq -w 0 50)
+	#do
+		#[[ -s ./package_image_beforeBoot.tar.flx ]] && [[ -e ./package_image_beforeBoot.tar.flx ]] && tail -c 1997378560 package_image_beforeBoot.tar.flx > package_image_beforeBoot.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image_beforeBoot.tar.flx
+	#done
+
+	_ubDistBuild_split_procedure ./package_image_beforeBoot.tar.flx
 
 	rm -f ./package_image_beforeBoot.tar.flx
 
@@ -49536,14 +49851,16 @@ _ubDistBuild_split_before_noBoot() {
 
 
 	cd "$scriptLocal"
-	#split -b 1997378560 -d package_image_before_noBoot.tar.flx package_image_before_noBoot.tar.flx.part
+	##split -b 1997378560 -d package_image_before_noBoot.tar.flx package_image_before_noBoot.tar.flx.part
 
-	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
-	local currentIteration
-	for currentIteration in $(seq -w 0 50)
-	do
-		[[ -s ./package_image_before_noBoot.tar.flx ]] && [[ -e ./package_image_before_noBoot.tar.flx ]] && tail -c 1997378560 package_image_before_noBoot.tar.flx > package_image_before_noBoot.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image_before_noBoot.tar.flx
-	done
+	## https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	#local currentIteration
+	#for currentIteration in $(seq -w 0 50)
+	#do
+		#[[ -s ./package_image_before_noBoot.tar.flx ]] && [[ -e ./package_image_before_noBoot.tar.flx ]] && tail -c 1997378560 package_image_before_noBoot.tar.flx > package_image_before_noBoot.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_image_before_noBoot.tar.flx
+	#done
+
+	_ubDistBuild_split_procedure ./package_image_before_noBoot.tar.flx
 
 	rm -f ./package_image_before_noBoot.tar.flx
 
@@ -49556,15 +49873,17 @@ _ubDistBuild_split-live() {
 
 
 	cd "$scriptLocal"
-	#split -b 1997378560 -d vm-live.iso vm-live.iso.part
+	##split -b 1997378560 -d vm-live.iso vm-live.iso.part
 
 
-	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
-	local currentIteration
-	for currentIteration in $(seq -w 0 50)
-	do
-		[[ -s ./vm-live.iso ]] && [[ -e ./vm-live.iso ]] && tail -c 1997378560 vm-live.iso > vm-live.iso.part"$currentIteration" && truncate -s -1997378560 vm-live.iso
-	done
+	## https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	#local currentIteration
+	#for currentIteration in $(seq -w 0 50)
+	#do
+		#[[ -s ./vm-live.iso ]] && [[ -e ./vm-live.iso ]] && tail -c 1997378560 vm-live.iso > vm-live.iso.part"$currentIteration" && truncate -s -1997378560 vm-live.iso
+	#done
+
+	_ubDistBuild_split_procedure ./vm-live.iso
 
 	rm -f ./vm-live.iso
 
@@ -49578,12 +49897,14 @@ _ubDistBuild_split-rootfs() {
 
 	cd "$scriptLocal"
 
-	# https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
-	local currentIteration
-	for currentIteration in $(seq -w 0 50)
-	do
-		[[ -s ./package_rootfs.tar.flx ]] && [[ -e ./package_rootfs.tar.flx ]] && tail -c 1997378560 package_rootfs.tar.flx > package_rootfs.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_rootfs.tar.flx
-	done
+	## https://unix.stackexchange.com/questions/628747/split-large-file-into-chunks-and-delete-original
+	#local currentIteration
+	#for currentIteration in $(seq -w 0 50)
+	#do
+		#[[ -s ./package_rootfs.tar.flx ]] && [[ -e ./package_rootfs.tar.flx ]] && tail -c 1997378560 package_rootfs.tar.flx > package_rootfs.tar.flx.part"$currentIteration" && truncate -s -1997378560 package_rootfs.tar.flx
+	#done
+
+	_ubDistBuild_split_procedure ./package_rootfs.tar.flx
 
 	rm -f ./package_rootfs.tar.flx
 
@@ -49621,6 +49942,40 @@ _upload_ubDistBuild_custom() {
 	# TODO
 	
 	true
+}
+
+
+_custom_report() {
+    local functionEntryPWD
+    functionEntryPWD="$PWD"
+    
+    echo
+    echo 'init: _custom_report'
+    echo
+
+	! _messagePlain_probe_cmd _openChRoot && _messagePlain_bad 'fail: openChroot' && _messageFAIL
+
+	_messageNormal 'init: _custom_report: customReport, cronUserReport, cronRootReport'
+
+    _chroot find /etc /var/lib/docker | sudo -n tee "$globalVirtFS"/customReport > /dev/null
+    sudo -n cp -f "$globalVirtFS"/customReport "$scriptLocal"/customReport
+    sudo -n chown "$USER":"$USER" "$scriptLocal"/customReport
+
+	_chroot sudo -n -u user bash -c "crontab -l" | sudo -n tee "$globalVirtFS"/cronUserReport > /dev/null
+    sudo -n cp -f "$globalVirtFS"/cronUserReport "$scriptLocal"/cronUserReport
+	_chroot sudo -n -u root bash -c "crontab -l" | sudo -n tee "$globalVirtFS"/cronRootReport > /dev/null
+	sudo -n cp -f "$globalVirtFS"/cronRootReport "$scriptLocal"/cronRootReport
+
+    _messagePlain_nominal 'PASS'
+    _messagePlain_good 'good: success: _custom_report: customReport, cronUserReport, cronRootReport'
+	
+	! _messagePlain_probe_cmd _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
+
+    cd "$functionEntryPWD"
+    echo
+    echo '          PASS'
+    echo '          good: success: _custom_report'
+    echo
 }
 
 
@@ -49731,7 +50086,7 @@ _zSpecial_report_procedure() {
 	
 	#if [[ ! -e "$globalVirtFS"/coreReport ]]
 	#then
-		_chroot find /home/user/core/installations /home/user/core/infrastructure -not \( -path \*.git\* -prune \) | grep -v '_local/h' | sudo -n tee "$globalVirtFS"/coreReport > /dev/null
+		_chroot find /home/user/core/installations /home/user/core/infrastructure /home/user/core/variant /home/user/core/info -not \( -path \*.git\* -prune \) | grep -v '_local/h' | sudo -n tee "$globalVirtFS"/coreReport > /dev/null
 		sudo -n cp -f "$globalVirtFS"/coreReport "$scriptLocal"/coreReport
 		sudo -n chown "$USER":"$USER" "$scriptLocal"/coreReport
 	#fi
@@ -53810,6 +54165,294 @@ _convert-live-exhaustive-BDDL() {
 
 
 
+
+# WARNING: No production use. May be untested.
+
+# WARNING: Upgrade functions are also called by 'custom' scripts to ensure such binaries as 'extIface.exe' are most recent.
+
+# ATTENTION: This 'upgrade' functionality is a non-essential and intentionally less than comprehensive development tool to reduce cycle time for 'ubDistBuild' by cautiously and quickly upgrading only repositories, etc, with still rapidly developing essential functionality.
+
+
+
+# ATTENTION
+#./ubiquitous_bash.sh _create_ubDistBuild-rotten_install-kde
+
+
+# May be substituted in practice for '_zSpecial_report-FORCE' if there are issues with this function.
+_upgrade_report() {
+    local functionEntryPWD
+    functionEntryPWD="$PWD"
+    
+    echo
+    echo 'init: _upgrade_report'
+    echo
+
+	! _messagePlain_probe_cmd _openChRoot && _messagePlain_bad 'fail: openChroot' && _messageFAIL
+
+    _messageNormal 'init: _upgrade_report: dpkg'
+    #_chroot dpkg -l | sudo -n tee "$globalVirtFS"/dpkg > /dev/null
+    _chroot dpkg --get-selections | cut -f1 | sudo -n tee "$globalVirtFS"/dpkg > /dev/null
+    sudo -n cp -f "$globalVirtFS"/dpkg "$scriptLocal"/dpkg
+    sudo -n chown "$USER":"$USER" "$scriptLocal"/dpkg
+    _messagePlain_nominal 'PASS'
+    _messagePlain_good 'good: success: _upgrade_report: dpkg'
+
+    _messageNormal 'init: _upgrade_report: binReport'
+    _chroot find /bin/ /usr/bin/ /sbin/ /usr/sbin/ | sudo -n tee "$globalVirtFS"/binReport > /dev/null
+    _chroot find /home/user/.nix-profile/bin | sudo -n tee -a "$globalVirtFS"/binReport > /dev/null 2>&1
+    _chroot find /home/user/.gcloud/google-cloud-sdk/bin | sudo -n tee -a "$globalVirtFS"/binReport > /dev/null
+    _chroot find /home/user/.ebcli-virtual-env/executables | sudo -n tee -a "$globalVirtFS"/binReport > /dev/null 2>&1
+    sudo -n cp -f "$globalVirtFS"/binReport "$scriptLocal"/binReport
+    sudo -n chown "$USER":"$USER" "$scriptLocal"/binReport
+    _messagePlain_nominal 'PASS'
+    _messagePlain_good 'good: success: _upgrade_report: binReport'
+
+    _messageNormal 'init: _upgrade_report: coreReport'
+    _messagePlain_probe "_chroot find /home/user/core/installations /home/user/core/infrastructure /home/user/core/variant /home/user/core/info -not \( -path \*.git\* -prune \) | grep -v '_local/h' | sudo -n tee ""$globalVirtFS""/coreReport > /dev/null"
+    _chroot find /home/user/core/installations /home/user/core/infrastructure /home/user/core/variant /home/user/core/info -not \( -path \*.git\* -prune \) | grep -v '_local/h' | sudo -n tee "$globalVirtFS"/coreReport > /dev/null
+	sudo -n cp -f "$globalVirtFS"/coreReport "$scriptLocal"/coreReport
+	sudo -n chown "$USER":"$USER" "$scriptLocal"/coreReport
+    _messagePlain_nominal 'PASS'
+    _messagePlain_good 'good: success: _upgrade_report: coreReport'
+	
+	! _messagePlain_probe_cmd _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
+
+    cd "$functionEntryPWD"
+    echo
+    echo '          PASS'
+    echo '          good: success: _upgrade_report'
+    echo
+}
+
+
+
+_upgrade_core() {
+	local functionEntryPWD
+	functionEntryPWD="$PWD"
+
+    ! "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
+
+    _chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubDistFetch ; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest pull'
+    _chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubDistFetch ; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest submodule update --recursive'
+    _chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubDistFetch ; ./ubiquitous_bash.sh _upgrade'
+
+    ! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
+
+    cd "$functionEntryPWD"
+}
+
+# Normally does nothing: MSWindows installers are usually only copied with custom ubdist/OS derivatives specifically used for bootstrapping MSWindows... and usually those derivatives custom procedures will effect this update, etc, already.
+_upgrade_installers() {
+    local functionEntryPWD
+    functionEntryPWD="$PWD"
+    
+    echo
+    echo 'init: _upgrade_installers'
+    echo
+
+	! _messagePlain_probe_cmd _openChRoot && _messagePlain_bad 'fail: openChroot' && _messageFAIL
+
+    if _chroot sudo -n -u user bash -c '[[ -e /home/user/core/installations/pumpCompanion.exe ]] || [[ -e /home/user/core/installations/extIface.exe ]] || [[ -e /home/user/core/installations/ubDistBuild.exe ]]'
+    then
+
+        # https://unix.stackexchange.com/questions/486760/is-it-possible-to-allow-multiple-ssh-host-keys-for-the-same-ip
+        _messagePlain_probe_cmd _chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubDistFetch ; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest pull'
+        _messagePlain_probe_cmd _chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubDistFetch ; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest submodule update --recursive'
+
+        #_wget_githubRelease "mirage335-gizmos/pumpCompanion" "internal" "pumpCompanion.exe"
+        #sudo -n mv -f pumpCompanion.exe "$globalVirtFS"/home/user/core/installations/
+        _chroot sudo -n -u user bash -c '[[ -e /home/user/core/installations/pumpCompanion.exe ]]' && _messagePlain_probe_cmd _chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubDistFetch ; ./ubiquitous_bash.sh _upgrade_binary_GitHubRelease mirage335-gizmos/pumpCompanion pumpCompanion.exe /home/user/core/installations'
+        
+
+        #_wget_githubRelease "mirage335-colossus/extendedInterface" "internal" "extIface.exe"
+        #sudo -n mv -f extIface.exe "$globalVirtFS"/home/user/core/installations/
+        _chroot sudo -n -u user bash -c '[[ -e /home/user/core/installations/extIface.exe ]]' && _messagePlain_probe_cmd _chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubDistFetch ; ./ubiquitous_bash.sh _upgrade_binary_GitHubRelease mirage335-colossus/extendedInterface extIface.exe /home/user/core/installations'
+        
+        
+        #_wget_githubRelease "soaringDistributions/ubDistBuild" "internal" "ubDistBuild.exe"
+        #sudo -n mv -f ubDistBuild.exe "$globalVirtFS"/home/user/core/installations/
+        _chroot sudo -n -u user bash -c '[[ -e /home/user/core/installations/ubDistBuild.exe ]]' && _messagePlain_probe_cmd _chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubDistFetch ; ./ubiquitous_bash.sh _upgrade_binary_GitHubRelease soaringDistributions/ubDistBuild ubDistBuild.exe /home/user/core/installations'
+
+    fi
+	
+	! _messagePlain_probe_cmd _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
+
+    cd "$functionEntryPWD"
+    echo
+    echo '          PASS'
+    echo '          good: success: _upgrade_installers'
+    echo
+}
+
+
+_upgrade_apt() {
+    local functionEntryPWD
+    functionEntryPWD="$PWD"
+    
+    echo
+    echo 'init: _upgrade_apt'
+    echo
+    
+	# ATTRIBUTION-AI: ChatGPT o1-preview 2024-11-20 .
+    _messagePlain_probe sudo -n tee /etc/apt/apt.conf.d/99autoremove-recommends
+	echo 'APT::AutoRemove::RecommendsImportant "true";
+APT::AutoRemove::SuggestsImportant "true";' | sudo -n tee /etc/apt/apt.conf.d/99autoremove-recommends > /dev/null
+    
+    # https://www.commandinline.com/cheat-sheet/apt/?utm_source=chatgpt.com
+    _chroot env DEBIAN_FRONTEND=noninteractive apt-get -y update
+    _chroot env DEBIAN_FRONTEND=noninteractive apt-get --install-recommends -y upgrade
+    _chroot env DEBIAN_FRONTEND=noninteractive apt --install-recommends -y upgrade
+    _chroot env DEBIAN_FRONTEND=noninteractive apt --install-recommends -y full-upgrade
+
+
+
+
+    cd "$functionEntryPWD"
+    echo
+    echo '          PASS'
+    echo '          good: success: _upgrade_apt: '"$1"
+    echo
+}
+
+
+
+
+
+# ATTENTION: Upgrade kernel functions are similar to 'custom' functions, and WILL replace the existing kernel.
+
+_upgrade_kernel_remove() {
+    _messageNormal 'init: _upgrade_kernel_remove'
+    
+    
+    # Formal naming convention is [-distllc,][-lts,-mainline,][-desktop,-server,] . ONLY requirement is dotglob removal of all except server OR all purpose lts .
+    
+    ##'linux-headers*desktop'
+	#_messagePlain_probe_cmd _chroot apt-get -y remove 'linux-image*desktop'
+	##'linux-headers*mainline'
+	#_messagePlain_probe_cmd _chroot apt-get -y remove 'linux-image*mainline'
+	##'linux-headers*lts'
+	#_messagePlain_probe_cmd _chroot apt-get -y remove 'linux-image*lts'
+
+
+	#_messagePlain_probe_cmd _chroot apt-get -y remove 'linux-image*'
+
+
+    _messagePlain_probe_cmd _chroot apt-get -y remove 'linux-image*'
+    _messagePlain_probe_cmd _chroot apt-get -y purge 'linux-image*'
+    #_messagePlain_probe_cmd _chroot apt-get autoremove -y --purge
+
+    _messagePlain_probe_cmd _chroot dpkg --get-selections | grep 'linux-image'
+
+	
+	#_messagePlain_probe_cmd _chroot apt-get -y install 'linux-headers-amd64'
+
+
+    _messagePlain_nominal 'PASS'
+    _messagePlain_good 'good: success: _upgrade_kernel_remove'
+}
+
+# WARNING: May be untested.
+_upgrade_kernel_kernel-dpkg_sequence() {
+    #sudo -n dpkg -i "$1"
+    _messagePlain_probe_cmd sudo -n dpkg -i "$1"
+    [[ "$?" != "0" ]] && _messagePlain_bad 'fail: dpkg -i '"$1" && echo > ./FAIL && _messageFAIL
+
+    return 0
+}
+_upgrade_kernel_kernel_sequence() {
+    local functionEntryPWD
+    functionEntryPWD="$PWD"
+
+    _messageNormal 'init: _upgrade_kernel_kernel_sequence: '"$1"' '
+    
+    _start
+
+    _messagePlain_probe_cmd cp -f /home/user/core/installations/kernel_linux/"$1" "$safeTmp"/kernel_package.tar.gz
+
+    _messagePlain_probe_cmd cd "$safeTmp"
+    _messagePlain_probe_cmd tar xvf "$safeTmp"/kernel_package.tar.gz
+
+	#_messagePlain_probe_cmd find "$safeTmp" -iname '*.deb' -exec echo {} \;
+    _messagePlain_probe_cmd find "$safeTmp" -iname '*.deb' -exec "$scriptAbsoluteLocation" _upgrade_kernel_kernel-dpkg_sequence {} \;
+
+    [[ -e "$safeTmp"/FAIL ]] && _messagePlain_bad 'fail: _upgrade_kernel_kernel_sequence: '"$1" && _messageFAIL
+
+    _messagePlain_probe_cmd sudo -n apt-get -y install 'linux-headers-amd64'
+
+	! _messagePlain_probe_cmd sudo -n apt-get -y install -f && _messagePlain_bad 'fail: apt-get -y install -f' && _messageFAIL
+    
+    cd "$functionEntryPWD"
+    
+    _messagePlain_nominal 'PASS'
+    _messagePlain_good 'good: success: _upgrade_kernel_kernel_sequence: '"$1"
+    _stop
+}
+_upgrade_kernel_kernel() {
+	echo
+    echo 'init: _upgrade_kernel_kernel: '"$1"
+    echo
+    
+    local functionEntryPWD
+	functionEntryPWD="$PWD"
+	
+	! _messagePlain_probe_cmd "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
+	
+	_messagePlain_probe_cmd _upgrade_kernel_remove
+
+    #linux-lts-amd64-debian.tar.gz
+    #linux-mainline-amd64-debian.tar.gz
+    ##linux-lts-server-amd64-debian.tar.gz
+    #linux-mainline-server-amd64-debian.tar.gz
+    local currentKernelPackage
+    currentKernelPackage="$1"
+    _messagePlain_probe_var currentKernelPackage
+
+    # https://unix.stackexchange.com/questions/486760/is-it-possible-to-allow-multiple-ssh-host-keys-for-the-same-ip
+    _messagePlain_probe_cmd _chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubDistFetch ; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest pull'
+    _messagePlain_probe_cmd _chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubDistFetch ; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest submodule update --recursive'
+    ! _messagePlain_probe_cmd _chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubDistFetch ; ./ubiquitous_bash.sh _upgrade_binary_GitHubRelease soaringDistributions/mirage335KernelBuild '"$currentKernelPackage"' /home/user/core/installations/kernel_linux' && _messagePlain_bad 'fail: _upgrade_binary_GitHubRelease: '"$currentKernelPackage" && _messageFAIL
+    
+	_messagePlain_probe_cmd _chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubDistBuild; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest pull'
+    _messagePlain_probe_cmd _chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubDistBuild ; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest submodule update --recursive'
+    ! _messagePlain_probe_cmd _chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubDistBuild ; ./ubiquitous_bash.sh _upgrade_kernel_kernel_sequence '"$currentKernelPackage" && _messagePlain_bad 'fail: _upgrade_kernel_kernel_sequence: '"$currentKernelPackage" && _messageFAIL
+    
+
+	
+	! _messagePlain_probe_cmd "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
+	
+	
+	cd "$functionEntryPWD"
+    echo
+    echo '          PASS'
+    echo '          good: success: _upgrade_kernel_kernel: '"$1"
+    echo
+}
+_upgrade_kernel_server() {
+	! _messagePlain_probe_cmd "$scriptAbsoluteLocation" _upgrade_kernel_kernel linux-mainline-server-amd64-debian.tar.gz && _messagePlain_bad 'fail: _upgrade_kernel_server' && _messageFAIL
+    echo '          good: success: _upgrade_kernel_server'
+    echo
+}
+_upgrade_kernel_mainline_server() {
+    _upgrade_kernel_server
+}
+
+_upgrade_kernel_lts() {
+	! _messagePlain_probe_cmd "$scriptAbsoluteLocation" _upgrade_kernel_kernel linux-lts-amd64-debian.tar.gz && _messagePlain_bad 'fail: _upgrade_kernel_lts' && _messageFAIL
+    echo '          good: success: _upgrade_kernel_lts'
+    echo
+}
+
+_upgrade_kernel() {
+	_upgrade_kernel_lts
+}
+
+
+
+
+
+
+
+
 #currentReversePort=""
 #currentMatchingReversePorts=""
 #currentReversePortOffset=""
@@ -55021,6 +55664,12 @@ _deps_w540() {
 	export enUb_w540="true"
 }
 
+_deps_gpd() {
+	_deps_notLean
+	_deps_hardware
+	export enUb_gpd="true"
+}
+
 _deps_peripherial() {
 	_deps_notLean
 	_deps_hardware
@@ -55615,6 +56264,7 @@ _compile_bash_deps() {
 		_deps_measurement
 		_deps_x220t
 		_deps_w540
+		_deps_gpd
 		
 		_deps_generic
 		
@@ -55829,6 +56479,7 @@ _compile_bash_deps() {
 		#_deps_measurement
 		#_deps_x220t
 		#_deps_w540
+		#_deps_gpd
 		#_deps_peripherial
 		
 		#_deps_user
@@ -55933,6 +56584,7 @@ _compile_bash_deps() {
 		#_deps_measurement
 		#_deps_x220t
 		#_deps_w540
+		#_deps_gpd
 		#_deps_peripherial
 		
 		#_deps_user
@@ -56037,6 +56689,7 @@ _compile_bash_deps() {
 		_deps_measurement
 		_deps_x220t
 		_deps_w540
+		_deps_gpd
 		_deps_peripherial
 		
 		_deps_user
@@ -56529,6 +57182,8 @@ _compile_bash_hardware() {
 	[[ "$enUb_hardware" == "true" ]] && [[ "$enUb_w540" == "true" ]] && includeScriptList+=( "hardware/w540"/w540_fan.sh )
 	
 	[[ "$enUb_hardware" == "true" ]] && [[ "$enUb_peripherial" == "true" ]] && includeScriptList+=( "hardware/peripherial/h1060p"/h1060p.sh )
+	
+	[[ "$enUb_hardware" == "true" ]] && [[ "$enUb_gpd" == "true" ]] && includeScriptList+=( "hardware/gpdWinMini2024_8840U"/gpdWinMini2024_8840U_fan.sh )
 
 	( [[ "$enUb_hardware" == "true" ]] || [[ "$enUb_measurement" == "true" ]] ) && includeScriptList+=( "hardware/measurement"/live_hash.sh )
 }
@@ -57120,6 +57775,9 @@ _compile_bash_program_prog() {
 
 
 	includeScriptList+=( _prog-ops.sh )
+
+
+	includeScriptList+=( core-upgrade.sh )
 	
 	true
 }
