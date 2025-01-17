@@ -202,7 +202,7 @@ jobs:
           sudo -n udevadm control --reload-rules
           sudo -n udevadm trigger --name-match=kvm
           sudo -n apt-get update
-          sudo -n apt-get install -y libvirt-clients libvirt-daemon-system libvirt-daemon virtinst bridge-utils qemu qemu-system-x86
+          sudo -n apt-get install -y libvirt-clients libvirt-daemon-system libvirt-daemon virtinst bridge-utils qemu-user qemu-utils qemu-system-x86
           sudo -n usermod -a -G kvm $USER
           sudo -n usermod -a -G libvirt $USER
           sudo -n usermod -a -G docker $USER
@@ -1625,7 +1625,7 @@ jobs:
           cat ./_local/_hash-ubdist.txt
 
       - name: artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: _hash-ubdist.txt
           path: |

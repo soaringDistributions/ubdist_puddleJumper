@@ -36,7 +36,7 @@ _ub_cksum_special_derivativeScripts_contents() {
 #export ub_setScriptChecksum_disable='true'
 ( [[ -e "$0".nck ]] || [[ "${BASH_SOURCE[0]}" != "${0}" ]] || [[ "$1" == '--profile' ]] || [[ "$1" == '--script' ]] || [[ "$1" == '--call' ]] || [[ "$1" == '--return' ]] || [[ "$1" == '--devenv' ]] || [[ "$1" == '--shell' ]] || [[ "$1" == '--bypass' ]] || [[ "$1" == '--parent' ]] || [[ "$1" == '--embed' ]] || [[ "$1" == '--compressed' ]] || [[ "$0" == "/bin/bash" ]] || [[ "$0" == "-bash" ]] || [[ "$0" == "/usr/bin/bash" ]] || [[ "$0" == "bash" ]] ) && export ub_setScriptChecksum_disable='true'
 export ub_setScriptChecksum_header='2591634041'
-export ub_setScriptChecksum_contents='2784656830'
+export ub_setScriptChecksum_contents='562877612'
 
 # CAUTION: Symlinks may cause problems. Disable this test for such cases if necessary.
 # WARNING: Performance may be crucial here.
@@ -674,6 +674,7 @@ APT::AutoRemove::SuggestsImportant "true";' | sudo -n tee /etc/apt/apt.conf.d/99
     #gpg pigz curl gdisk lz4 mawk jq gawk build-essential autoconf pkg-config bsdutils findutils patch tar gzip bzip2 sed lua-lpeg axel aria2 gh rsync pv expect libfuse2 udftools debootstrap cifs-utils dos2unix xxd debhelper p7zip nsis jp2a btrfs-progs btrfs-compsize zstd zlib1g coreutils util-linux kpartx openssl growisofs udev gdisk parted bc e2fsprogs xz-utils libreadline8 mkisofs genisoimage byobu xorriso squashfs-tools grub-pc-bin grub-efi-amd64-bin grub-common mtools dosfstools fdisk cloud-guest-utils
     ##dnsutils bind9-dnsutils bison libelf-dev elfutils flex libncurses-dev libudev-dev dwarves pahole cmake sockstat liblinear4 liblua5.3-0 nmap nmap-common socat dwarves pahole libssl-dev cpio libgtk2.0-0 libwxgtk3.0-gtk3-0v5 wipe iputils-ping nilfs-tools python3 sg3-utils cryptsetup php
     ##qemu-system-x86
+    ##qemu-user qemu-utils
     _getMinimal_cloud_ubDistBuild_noBoot_backend gpg pigz curl gdisk lz4 mawk jq gawk build-essential autoconf pkg-config bsdutils findutils patch tar gzip bzip2 sed lua-lpeg axel aria2 gh rsync pv expect libfuse2 udftools debootstrap cifs-utils dos2unix xxd debhelper p7zip nsis jp2a btrfs-progs btrfs-compsize zstd zlib1g coreutils util-linux kpartx openssl growisofs udev gdisk parted bc e2fsprogs xz-utils libreadline8 mkisofs genisoimage byobu xorriso squashfs-tools grub-pc-bin grub-efi-amd64-bin grub-common mtools dosfstools fdisk cloud-guest-utils
 
     _messagePlain_probe apt-get remove --autoremove -y plasma-discover
@@ -12801,6 +12802,9 @@ _getMinimal_cloud() {
 	_getMost_backend_aptGetInstall bzip2
 	
 	_getMost_backend_aptGetInstall flex
+
+	_getMost_backend_aptGetInstall imagemagick
+	_getMost_backend_aptGetInstall graphicsmagick-imagemagick-compat
 	
 	_getMost_backend_aptGetInstall librecode0
 	_getMost_backend_aptGetInstall wkhtmltopdf
@@ -12940,6 +12944,7 @@ _getMinimal_cloud() {
 	
 	_getMost_backend_aptGetInstall debootstrap
 	
+	#_getMost_backend_aptGetInstall qemu-user qemu-utils
 	_getMost_backend_aptGetInstall qemu-system-x86
 	
 	_getMost_backend_aptGetInstall cifs-utils
@@ -47418,20 +47423,25 @@ _custom_kernel_server-sequence() {
 	! "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
 	
 	
-	# Formal naming convention is [-distllc,][-lts,-mainline,][-desktop,-server,] . ONLY requirement is dotglob removal of all except server OR all purpose lts .
+	## Formal naming convention is [-distllc,][-lts,-mainline,][-desktop,-server,] . ONLY requirement is dotglob removal of all except server OR all purpose lts .
 	
-	#'linux-headers*desktop'
-	_chroot apt-get -y remove 'linux-image*desktop'
-	#'linux-headers*mainline'
-	_chroot apt-get -y remove 'linux-image*mainline'
+	##'linux-headers*desktop'
+	#_chroot apt-get -y remove 'linux-image*desktop'
+	##'linux-headers*mainline'
+	#_chroot apt-get -y remove 'linux-image*mainline'
 	#'linux-headers*lts'
-	_chroot apt-get -y remove 'linux-image*lts'
+	#_chroot apt-get -y remove 'linux-image*lts'
 
-
-	_chroot apt-get -y remove 'linux-image*'
-
+	#_chroot apt-get -y remove 'linux-image*'
 	
-	_chroot apt-get -y install 'linux-headers-amd64'
+	#_chroot apt-get -y install 'linux-headers-amd64'
+
+
+	# ATTENTION: For reliability, remove all linux-image packages, then install new kernel, resulting in only the desired kernel definitely becoming default to boot.
+	_messagePlain_probe_cmd _chroot apt-get -y remove 'linux-image*'
+    _messagePlain_probe_cmd _chroot apt-get -y purge 'linux-image*'
+
+    _messagePlain_probe_cmd _chroot dpkg --get-selections | grep 'linux-image'
 	
 	
 	
@@ -47478,17 +47488,45 @@ _custom_kernel_lts-sequence() {
 	
 	
 	
-	# Formal naming convention is [-distllc,][-lts,-mainline,][-desktop,-server,] . ONLY requirement is dotglob removal of all except server OR all purpose lts .
+	## Formal naming convention is [-distllc,][-lts,-mainline,][-desktop,-server,] . ONLY requirement is dotglob removal of all except server OR all purpose lts .
 	
-	#'linux-headers*server'
-	_chroot apt-get -y remove 'linux-image*server'
-	#'linux-headers*mainline'
-	_chroot apt-get -y remove 'linux-image*mainline'
+	##'linux-headers*server'
+	#_chroot apt-get -y remove 'linux-image*server'
+	##'linux-headers*mainline'
+	#_chroot apt-get -y remove 'linux-image*mainline'
 	
-	_chroot apt-get -y install 'linux-headers-amd64'
+	#_chroot apt-get -y install 'linux-headers-amd64'
+
+	#_chroot apt-get -y remove 'linux-image*'
 
 
-	_chroot apt-get -y remove 'linux-image*'
+	# ATTENTION: For reliability, remove all linux-image packages, then install new kernel, resulting in only the desired kernel definitely becoming default to boot.
+	_messagePlain_probe_cmd _chroot apt-get -y remove 'linux-image*'
+    _messagePlain_probe_cmd _chroot apt-get -y purge 'linux-image*'
+
+    _messagePlain_probe_cmd _chroot dpkg --get-selections | grep 'linux-image'
+
+
+
+
+	cd "$safeTmp"
+	if [[ -e "$scriptLocal"/"linux-lts-amd64-debian.tar.gz" ]]
+	then
+		sudo -n cp -f "$scriptLocal"/"linux-lts-amd64-debian.tar.gz" "$globalVirtFS"/
+	elif _wget_githubRelease_internal "soaringDistributions/mirage335KernelBuild" "linux-lts-amd64-debian.tar.gz" && [[ -e "$safeTmp"/"linux-lts-amd64-debian.tar.gz" ]]
+	then
+		sudo -n cp -f "$safeTmp"/"linux-lts-amd64-debian.tar.gz" "$globalVirtFS"/
+	else
+		sudo -n cp -f "$globalVirtFS"/home/user/core/installations/kernel_linux/linux-lts-amd64-debian.tar.gz "$globalVirtFS"/
+	fi
+	_chroot tar xf /linux-lts-amd64-debian.tar.gz
+	_chroot bash -c 'dpkg -i ./lts/*.deb'
+	_chroot rm -f ./lts/.config './lts/linux-*' ./lts/statement.sh.out.txt
+	_chroot rm -f ./lts/linux-lts-amd64-debian.tar.gz
+	_chroot rm -f /linux-lts-amd64-debian.tar.gz
+
+
+	
 
 	
 	! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
