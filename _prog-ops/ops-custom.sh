@@ -85,15 +85,19 @@ CZXWXcRMTo8EmM8i4d
 	
 	! _openChRoot && _messagePlain_bad 'fail: openChroot' && _messageFAIL
 
+	sudo -n cp -a -f /home/user/core/installations/pumpCompanion.exe "$globalVirtFS"/home/user/core/installations/
 	_wget_githubRelease "mirage335-gizmos/pumpCompanion" "internal" "pumpCompanion.exe"
+	[[ $(wc -c pumpCompanion.exe | cut -f1 -d\  | tr -dc '0-9') -lt 1000000 ]] && rm -f pumpCompanion.exe
 	sudo -n mv -f pumpCompanion.exe "$globalVirtFS"/home/user/core/installations/
 	
-
+	sudo -n cp -a -f /home/user/core/installations/extIface.exe "$globalVirtFS"/home/user/core/installations/
 	_wget_githubRelease "mirage335-colossus/extendedInterface" "internal" "extIface.exe"
+	[[ $(wc -c extIface.exe | cut -f1 -d\  | tr -dc '0-9') -lt 1000000 ]] && rm -f extIface.exe
 	sudo -n mv -f extIface.exe "$globalVirtFS"/home/user/core/installations/
 	
-	
+	sudo -n cp -a -f /home/user/core/installations/ubDistBuild.exe "$globalVirtFS"/home/user/core/installations/
 	_wget_githubRelease "soaringDistributions/ubDistBuild" "internal" "ubDistBuild.exe"
+	[[ $(wc -c ubDistBuild.exe | cut -f1 -d\  | tr -dc '0-9') -lt 1000000 ]] && rm -f ubDistBuild.exe
 	sudo -n mv -f ubDistBuild.exe "$globalVirtFS"/home/user/core/installations/
 	
 	! _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
