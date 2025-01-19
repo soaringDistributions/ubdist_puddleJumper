@@ -36,7 +36,7 @@ _ub_cksum_special_derivativeScripts_contents() {
 #export ub_setScriptChecksum_disable='true'
 ( [[ -e "$0".nck ]] || [[ "${BASH_SOURCE[0]}" != "${0}" ]] || [[ "$1" == '--profile' ]] || [[ "$1" == '--script' ]] || [[ "$1" == '--call' ]] || [[ "$1" == '--return' ]] || [[ "$1" == '--devenv' ]] || [[ "$1" == '--shell' ]] || [[ "$1" == '--bypass' ]] || [[ "$1" == '--parent' ]] || [[ "$1" == '--embed' ]] || [[ "$1" == '--compressed' ]] || [[ "$0" == "/bin/bash" ]] || [[ "$0" == "-bash" ]] || [[ "$0" == "/usr/bin/bash" ]] || [[ "$0" == "bash" ]] ) && export ub_setScriptChecksum_disable='true'
 export ub_setScriptChecksum_header='2591634041'
-export ub_setScriptChecksum_contents='2033128067'
+export ub_setScriptChecksum_contents='3690036473'
 
 # CAUTION: Symlinks may cause problems. Disable this test for such cases if necessary.
 # WARNING: Performance may be crucial here.
@@ -645,65 +645,6 @@ _____special_live_dent_restore() {
 
 
 #Override (Program).
-
-
-# Attempts to reduce adding the necessary Debian packages, from ~5minutes , to much less . However, in practice, '_getMinimal_cloud' , is already very minimal.
-# Relies on several assumptions:
-#  _setupUbiquitous   has definitely always already been called
-#  apt-fast   either is or is not available, hardcoded
-
-
-
-
-_getMinimal_cloud_ubDistBuild_noBoot_backend() {
-    _messagePlain_probe "$@"
-    sudo -n env XZ_OPT="-T0" DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -q --install-recommends -y "$@"
-}
-
-_getMinimal_cloud_ubDistBuild_noBoot() {
-    echo 'APT::AutoRemove::RecommendsImportant "true";
-APT::AutoRemove::SuggestsImportant "true";' | sudo -n tee /etc/apt/apt.conf.d/99autoremove-recommends > /dev/null
-
-    #dpkg --add-architecture i386
-    #apt-get update
-    #libc6:i386 lib32z1
-    
-    _getMinimal_cloud_ubDistBuild_noBoot_backend --reinstall wget
-
-    ##xz btrfs-tools grub-mkstandalone mkfs.vfat mkswap mmd mcopy mksquashfs
-    #gpg pigz curl gdisk lz4 mawk jq gawk build-essential autoconf pkg-config bsdutils findutils patch tar gzip bzip2 sed lua-lpeg axel aria2 gh rsync pv expect libfuse2 udftools debootstrap cifs-utils dos2unix xxd debhelper p7zip nsis jp2a btrfs-progs btrfs-compsize zstd zlib1g coreutils util-linux kpartx openssl growisofs udev gdisk parted bc e2fsprogs xz-utils libreadline8 mkisofs genisoimage byobu xorriso squashfs-tools grub-pc-bin grub-efi-amd64-bin grub-common mtools dosfstools fdisk cloud-guest-utils
-    ##dnsutils bind9-dnsutils bison libelf-dev elfutils flex libncurses-dev libudev-dev dwarves pahole cmake sockstat liblinear4 liblua5.3-0 nmap nmap-common socat dwarves pahole libssl-dev cpio libgtk2.0-0 libwxgtk3.0-gtk3-0v5 wipe iputils-ping nilfs-tools python3 sg3-utils cryptsetup php
-    ##qemu-system-x86
-    ##qemu-user qemu-utils
-    _getMinimal_cloud_ubDistBuild_noBoot_backend gpg pigz curl gdisk lz4 mawk jq gawk build-essential autoconf pkg-config bsdutils findutils patch tar gzip bzip2 sed lua-lpeg axel aria2 gh rsync pv expect libfuse2 udftools debootstrap cifs-utils dos2unix xxd debhelper p7zip nsis jp2a btrfs-progs btrfs-compsize zstd zlib1g coreutils util-linux kpartx openssl growisofs udev gdisk parted bc e2fsprogs xz-utils libreadline8 mkisofs genisoimage byobu xorriso squashfs-tools grub-pc-bin grub-efi-amd64-bin grub-common mtools dosfstools fdisk cloud-guest-utils
-
-    _messagePlain_probe apt-get remove --autoremove -y plasma-discover
-    sudo -n env XZ_OPT="-T0" DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" remove --autoremove -y plasma-discover
-
-    _messagePlain_probe _custom_splice_opensslConfig
-	_here_opensslConfig_legacy | sudo -n tee /etc/ssl/openssl_legacy.cnf > /dev/null 2>&1
-
-    if ! sudo -n grep 'openssl_legacy' /etc/ssl/openssl.cnf > /dev/null 2>&1
-    then
-        sudo -n cp -f /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf.orig
-        echo '
-
-
-.include = /etc/ssl/openssl_legacy.cnf
-
-' | sudo -n cat /etc/ssl/openssl.cnf.orig - | sudo -n tee /etc/ssl/openssl.cnf > /dev/null 2>&1
-    fi
-
-    true
-}
-# WARNING: Forces all workflows to use this specialized function by default . Beware the possibility of external assumptions breaking very long build jobs.
-#_getMinimal_cloud() {
-    #_getMinimal_cloud_ubDistBuild_noBoot
-#}
-
-
-
-
 
 
 #Override, cygwin.
@@ -6233,8 +6174,8 @@ _setup_ssh_copyKey() {
 		chmod 600 "$scriptLocal"/ssh/"$sshKeyName"
 		chmod 600 "$scriptLocal"/ssh/"$sshKeyName".pub > /dev/null 2>&1
 		
-		cp -n "$scriptLocal"/ssh/"$sshKeyName" "$sshLocalSSH"/"$sshKeyName"
-		cp -n "$scriptLocal"/ssh/"$sshKeyName".pub "$sshLocalSSH"/"$sshKeyName".pub > /dev/null 2>&1
+		cp --update=none "$scriptLocal"/ssh/"$sshKeyName" "$sshLocalSSH"/"$sshKeyName"
+		cp --update=none "$scriptLocal"/ssh/"$sshKeyName".pub "$sshLocalSSH"/"$sshKeyName".pub > /dev/null 2>&1
 		
 		return 0
 	fi
@@ -6244,8 +6185,8 @@ _setup_ssh_copyKey() {
 		chmod 600 "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName"
 		chmod 600 "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName".pub > /dev/null 2>&1
 		
-		cp -n "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName" "$sshLocalSSH"/"$sshKeyName"
-		cp -n "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName".pub "$sshLocalSSH"/"$sshKeyName".pub > /dev/null 2>&1
+		cp --update=none "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName" "$sshLocalSSH"/"$sshKeyName"
+		cp --update=none "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName".pub "$sshLocalSSH"/"$sshKeyName".pub > /dev/null 2>&1
 		
 		return 0
 	fi
@@ -10905,6 +10846,10 @@ _fetchDep_ubuntuFocalFossa_special() {
 		then
 			echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian jammy contrib' | sudo -n tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
 		fi
+		if [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '24.04' > /dev/null 2>&1
+		then
+			echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian noble contrib' | sudo -n tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
+		fi
 		
 		"$scriptAbsoluteLocation" _getDep wget
 		! _wantDep wget && return 1
@@ -11283,6 +11228,11 @@ _fetchDep_ubuntu() {
 		_fetchDep_ubuntuFocalFossa "$@"
 		return
 	fi
+	if [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '24.04' > /dev/null 2>&1
+	then
+		_fetchDep_ubuntuFocalFossa "$@"
+		return
+	fi
 	
 	
 	return 1
@@ -11456,7 +11406,8 @@ _getMost_debian12_aptSources() {
 			#echo 'deb https://fasttrack.debian.net/debian-fasttrack/ bookworm-backports-staging main contrib' | _getMost_backend tee -a /etc/apt/sources.list
 		#fi
 		
-	elif [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '20.04' > /dev/null 2>&1
+	fi
+	if [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '20.04' > /dev/null 2>&1
 	then
 		true
 		
@@ -11467,13 +11418,26 @@ _getMost_debian12_aptSources() {
 		curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
 		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
 		echo "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
-	elif [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '22.04' > /dev/null 2>&1
+	fi
+	if [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '22.04' > /dev/null 2>&1
 	then
 		true
 		
 		wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | _getMost_backend apt-key add -
 		wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
 		echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian jammy contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
+		
+		curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
+		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
+		echo "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+	fi
+	if [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '24.04' > /dev/null 2>&1
+	then
+		true
+		
+		wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | _getMost_backend apt-key add -
+		wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
+		echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian noble contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
 		
 		curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
 		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
@@ -12431,7 +12395,26 @@ _getMost_debian11() {
 
 
 
-
+_getMost_ubuntu24_aptSources() {
+	## May be an image copied while dpkg was locked. Especially if 'chroot'.
+	#_getMost_backend rm -f /var/lib/apt/lists/lock
+	#_getMost_backend rm -f /var/lib/dpkg/lock
+	
+	
+	#_getMost_backend_aptGetInstall wget
+	#_getMost_backend_aptGetInstall gpg
+	
+	
+	#_getMost_backend mkdir -p /etc/apt/sources.list.d
+	#echo 'deb http://download.virtualbox.org/virtualbox/debian focal contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
+	#echo 'deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable' | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+	
+	#_getMost_backend wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | _getMost_backend apt-key add -
+	#_getMost_backend wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
+	
+	#_getMost_debian11_aptSources "$@"
+	_getMost_debian12_aptSources "$@"
+}
 _getMost_ubuntu22_aptSources() {
 	## May be an image copied while dpkg was locked. Especially if 'chroot'.
 	#_getMost_backend rm -f /var/lib/apt/lists/lock
@@ -12450,6 +12433,26 @@ _getMost_ubuntu22_aptSources() {
 	#_getMost_backend wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
 	
 	_getMost_debian11_aptSources "$@"
+}
+_getMost_ubuntu24_install() {
+	_getMost_debian12_install "$@"
+	
+	# WARNING: Untested. May be old version of VirtualBox. May conflict with guest additions.
+	#_getMost_backend_aptGetInstall virtualbox-6.1
+	#_getMost_backend apt-get -d install -y virtualbox-6.1
+	_getMost_backend apt-get -d install -y virtualbox-7.1
+	
+	
+	# WARNING: Untested. May cause problems.
+	#_getMost_backend_aptGetInstall docker-ce
+	_getMost_backend apt-get -d install -y docker-ce
+	
+	_getMost_backend_aptGetInstall tasksel
+	_getMost_backend_aptGetInstall kde-plasma-desktop
+	
+	#_getMost_backend tasksel --new-install install "ubuntu-desktop"
+	#_wait_debianInstall
+	_getMost_backend_aptGetInstall ubuntu-desktop
 }
 _getMost_ubuntu22_install() {
 	_getMost_debian11_install "$@"
@@ -12472,6 +12475,32 @@ _getMost_ubuntu22_install() {
 }
 
 # ATTENTION: End user function.
+_getMost_ubuntu24() {
+	_messagePlain_probe 'begin: _getMost_ubuntu24'
+	
+	_set_getMost_backend "$@"
+	_set_getMost_backend_debian "$@"
+	_test_getMost_backend "$@"
+	
+	# https://askubuntu.com/questions/104899/make-apt-get-or-aptitude-run-with-y-but-not-prompt-for-replacement-of-configu
+	echo 'Dpkg::Options {"--force-confdef"};' | _getMost_backend tee /etc/apt/apt.conf.d/50unattended-replaceconfig-ub > /dev/null
+	echo 'Dpkg::Options {"--force-confold"};' | _getMost_backend tee -a /etc/apt/apt.conf.d/50unattended-replaceconfig-ub > /dev/null
+	
+	#https://askubuntu.com/questions/876240/how-to-automate-setting-up-of-keyboard-configuration-package
+	#apt-get install -y debconf-utils
+	export DEBIAN_FRONTEND=noninteractive
+	
+	
+	_getMost_ubuntu24_aptSources "$@"
+	
+	_getMost_ubuntu24_install "$@"
+	
+	
+	_getMost_backend apt-get remove --autoremove -y plasma-discover
+	
+	
+	_messagePlain_probe 'end: _getMost_ubuntu24'
+}
 _getMost_ubuntu22() {
 	_messagePlain_probe 'begin: _getMost_ubuntu22'
 	
@@ -12500,6 +12529,39 @@ _getMost_ubuntu22() {
 }
 
 # ATTENTION: Cloud 'end user' function.
+_getMost_ubuntu24-VBoxManage() {
+	_messagePlain_probe 'begin: _getMost_ubuntu24-VBoxManage'
+	
+	_set_getMost_backend "$@"
+	_set_getMost_backend_debian "$@"
+	_test_getMost_backend "$@"
+	
+	# https://askubuntu.com/questions/104899/make-apt-get-or-aptitude-run-with-y-but-not-prompt-for-replacement-of-configu
+	echo 'Dpkg::Options {"--force-confdef"};' | _getMost_backend tee /etc/apt/apt.conf.d/50unattended-replaceconfig-ub > /dev/null
+	echo 'Dpkg::Options {"--force-confold"};' | _getMost_backend tee -a /etc/apt/apt.conf.d/50unattended-replaceconfig-ub > /dev/null
+	
+	#https://askubuntu.com/questions/876240/how-to-automate-setting-up-of-keyboard-configuration-package
+	#apt-get install -y debconf-utils
+	export DEBIAN_FRONTEND=noninteractive
+	
+	
+	_getMost_ubuntu24_aptSources "$@"
+	
+	#_getMost_ubuntu24_install "$@"
+	#_getMost_backend apt-get -d install -y virtualbox-6.1
+	#_getMost_backend apt-get -d install -y virtualbox-7.0
+	_getMost_backend apt-get -d install -y virtualbox-7.1
+	
+	#_getMost_backend_aptGetInstall virtualbox-7.0
+	_getMost_backend_aptGetInstall virtualbox-7.1
+	
+	_getMost_backend apt-get remove --autoremove -y plasma-discover
+	
+	_getMost_backend apt-get -y clean
+	
+	
+	_messagePlain_probe 'end: _getMost_ubuntu24-VBoxManage'
+}
 _getMost_ubuntu22-VBoxManage() {
 	_messagePlain_probe 'begin: _getMost_ubuntu22-VBoxManage'
 	
@@ -12662,6 +12724,10 @@ _getMost() {
 	elif [[ -e /etc/issue ]] && cat /etc/issue | grep 'Debian\|Raspbian' > /dev/null 2>&1
 	then
 		_tryExecFull _getMost_debian11 "$@"
+		return
+	elif [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '24.04' > /dev/null 2>&1
+	then
+		_tryExecFull _getMost_ubuntu24 "$@"
 		return
 	elif [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' > /dev/null 2>&1
 	then
@@ -18962,12 +19028,12 @@ _mountChRoot() {
 	
 	if [[ -e "$absolute1"/etc/resolv.conf ]] && [[ ! -e "$absolute1"/etc/resolv.conf.host ]] && [[ -e /etc/resolv.conf ]]
 	then
-		sudo -n cp -n "$absolute1"/etc/resolv.conf "$absolute1"/etc/resolv.conf.guest.bak
+		sudo -n cp --update=none "$absolute1"/etc/resolv.conf "$absolute1"/etc/resolv.conf.guest.bak
 		sudo -n mv -n "$absolute1"/etc/resolv.conf "$absolute1"/etc/resolv.conf.guest
 		
 		#if [[ ! -e "$absolute1"/etc/resolv.conf.host ]]
 		#then
-			sudo -n cp -n -L /etc/resolv.conf "$absolute1"/etc/resolv.conf.host
+			sudo -n cp --update=none -L /etc/resolv.conf "$absolute1"/etc/resolv.conf.host
 			#sudo -n cat /etc/resolv.conf | sudo tee "$absolute1"/etc/resolv.conf.host > /dev/null 2>&1
 		#fi
 		
@@ -19118,7 +19184,7 @@ _mountChRoot_image_raspbian() {
 	sudo -n cp /usr/bin/qemu-arm-static "$chrootDir"/usr/bin/
 	sudo -n cp /usr/bin/qemu-armeb-static "$chrootDir"/usr/bin/
 	
-	sudo -n cp -n "$chrootDir"/etc/ld.so.preload "$chrootDir"/etc/ld.so.preload.orig
+	sudo -n cp --update=none "$chrootDir"/etc/ld.so.preload "$chrootDir"/etc/ld.so.preload.orig
 	echo | sudo -n tee "$chrootDir"/etc/ld.so.preload > /dev/null 2>&1
 	
 	
@@ -38377,7 +38443,11 @@ _set_discreteGPU-forWSL() {
     [[ "$MESA_D3D12_DEFAULT_ADAPTER_NAME" != "" ]] && return 0
     
     # https://github.com/microsoft/wslg/wiki/GPU-selection-in-WSLg
-    glxinfo -B | grep -i intel > /dev/null 2>&1 && export MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA
+    if type -p glxinfo > /dev/null 2>&1
+    then
+        glxinfo -B | grep -i intel > /dev/null 2>&1 && export MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA
+        return
+    fi
 }
 
 _set_msw_ghToken() {
@@ -47395,6 +47465,82 @@ _setup_uninstall() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Attempts to reduce adding the necessary Debian packages, from ~5minutes , to much less . However, in practice, '_getMinimal_cloud' , is already very minimal.
+# Relies on several assumptions:
+#  _setupUbiquitous   has definitely always already been called
+#  apt-fast   either is or is not available, hardcoded
+
+
+
+
+_getMinimal_cloud_ubDistBuild_noBoot_backend() {
+    _messagePlain_probe "$@"
+    sudo -n env XZ_OPT="-T0" DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -q --install-recommends -y "$@"
+}
+
+_getMinimal_cloud_ubDistBuild_noBoot() {
+    echo 'APT::AutoRemove::RecommendsImportant "true";
+APT::AutoRemove::SuggestsImportant "true";' | sudo -n tee /etc/apt/apt.conf.d/99autoremove-recommends > /dev/null
+
+    #dpkg --add-architecture i386
+    #apt-get update
+    #libc6:i386 lib32z1
+    
+    _getMinimal_cloud_ubDistBuild_noBoot_backend --reinstall wget
+
+    ##xz btrfs-tools grub-mkstandalone mkfs.vfat mkswap mmd mcopy mksquashfs
+    #gpg pigz curl gdisk lz4 mawk jq gawk build-essential autoconf pkg-config bsdutils findutils patch tar gzip bzip2 sed lua-lpeg axel aria2 gh rsync pv expect libfuse2 udftools debootstrap cifs-utils dos2unix xxd debhelper p7zip nsis jp2a btrfs-progs btrfs-compsize zstd zlib1g coreutils util-linux kpartx openssl growisofs udev gdisk parted bc e2fsprogs xz-utils libreadline8 mkisofs genisoimage byobu xorriso squashfs-tools grub-pc-bin grub-efi-amd64-bin grub-common mtools dosfstools fdisk cloud-guest-utils
+    ##dnsutils bind9-dnsutils bison libelf-dev elfutils flex libncurses-dev libudev-dev dwarves pahole cmake sockstat liblinear4 liblua5.3-0 nmap nmap-common socat dwarves pahole libssl-dev cpio libgtk2.0-0 libwxgtk3.0-gtk3-0v5 wipe iputils-ping nilfs-tools python3 sg3-utils cryptsetup php
+    ##qemu-system-x86
+    ##qemu-user qemu-utils
+    _getMinimal_cloud_ubDistBuild_noBoot_backend gpg pigz curl gdisk lz4 mawk jq gawk build-essential autoconf pkg-config bsdutils findutils patch tar gzip bzip2 sed lua-lpeg axel aria2 gh rsync pv expect libfuse2 udftools debootstrap cifs-utils dos2unix xxd debhelper p7zip nsis jp2a btrfs-progs btrfs-compsize zstd zlib1g coreutils util-linux kpartx openssl growisofs udev gdisk parted bc e2fsprogs xz-utils libreadline8 mkisofs genisoimage byobu xorriso squashfs-tools grub-pc-bin grub-efi-amd64-bin grub-common mtools dosfstools fdisk cloud-guest-utils
+
+    _messagePlain_probe apt-get remove --autoremove -y plasma-discover
+    sudo -n env XZ_OPT="-T0" DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" remove --autoremove -y plasma-discover
+
+    _messagePlain_probe _custom_splice_opensslConfig
+	_here_opensslConfig_legacy | sudo -n tee /etc/ssl/openssl_legacy.cnf > /dev/null 2>&1
+
+    if ! sudo -n grep 'openssl_legacy' /etc/ssl/openssl.cnf > /dev/null 2>&1
+    then
+        sudo -n cp -f /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf.orig
+        echo '
+
+
+.include = /etc/ssl/openssl_legacy.cnf
+
+' | sudo -n cat /etc/ssl/openssl.cnf.orig - | sudo -n tee /etc/ssl/openssl.cnf > /dev/null 2>&1
+    fi
+
+    true
+}
+# WARNING: Forces all workflows to use this specialized function by default . Beware the possibility of external assumptions breaking very long build jobs.
+#_getMinimal_cloud() {
+    #_getMinimal_cloud_ubDistBuild_noBoot
+#}
+
+
+
+
+
+
+
+
 ##### Core
 
 
@@ -47461,7 +47607,9 @@ _custom_kernel_server-sequence() {
 		sudo -n cp -f "$globalVirtFS"/home/user/core/installations/kernel_linux/linux-mainline-server-amd64-debian.tar.gz "$globalVirtFS"/
 	fi
 	_chroot tar xf /linux-mainline-server-amd64-debian.tar.gz
-	_chroot bash -c 'dpkg -i ./mainline-server/*.deb'
+	_messagePlain_probe_cmd _chroot bash -c 'dpkg -i ./mainline-server/*headers*.deb'
+	_messagePlain_probe_cmd _chroot bash -c 'ls -l /usr/src/*'
+	_messagePlain_probe_cmd _chroot bash -c 'dpkg -i ./mainline-server/*.deb'
 	_chroot rm -f ./mainline-server/.config './mainline-server/linux-*' ./mainline-server/statement.sh.out.txt
 	_chroot rm -f ./mainline-server/linux-mainline-server-amd64-debian.tar.gz
 	_chroot rm -f /linux-mainline-server-amd64-debian.tar.gz
@@ -47524,7 +47672,9 @@ _custom_kernel_lts-sequence() {
 		sudo -n cp -f "$globalVirtFS"/home/user/core/installations/kernel_linux/linux-lts-amd64-debian.tar.gz "$globalVirtFS"/
 	fi
 	_chroot tar xf /linux-lts-amd64-debian.tar.gz
-	_chroot bash -c 'dpkg -i ./lts/*.deb'
+	_messagePlain_probe_cmd _chroot bash -c 'dpkg -i ./lts/*headers*.deb'
+	_messagePlain_probe_cmd _chroot bash -c 'ls -l /usr/src/*'
+	_messagePlain_probe_cmd _chroot bash -c 'dpkg -i ./lts/*.deb'
 	_chroot rm -f ./lts/.config './lts/linux-*' ./lts/statement.sh.out.txt
 	_chroot rm -f ./lts/linux-lts-amd64-debian.tar.gz
 	_chroot rm -f /linux-lts-amd64-debian.tar.gz
@@ -54454,6 +54604,8 @@ _upgrade_kernel_kernel_sequence() {
     _messagePlain_probe_cmd tar xvf "$safeTmp"/kernel_package.tar.gz
 
 	#_messagePlain_probe_cmd find "$safeTmp" -iname '*.deb' -exec echo {} \;
+    _messagePlain_probe_cmd find "$safeTmp" -iname '*headers*.deb' -exec "$scriptAbsoluteLocation" _upgrade_kernel_kernel-dpkg_sequence {} \;
+    _messagePlain_probe_cmd ls -l /usr/src/*
     _messagePlain_probe_cmd find "$safeTmp" -iname '*.deb' -exec "$scriptAbsoluteLocation" _upgrade_kernel_kernel-dpkg_sequence {} \;
 
     [[ -e "$safeTmp"/FAIL ]] && _messagePlain_bad 'fail: _upgrade_kernel_kernel_sequence: '"$1" && _messageFAIL
