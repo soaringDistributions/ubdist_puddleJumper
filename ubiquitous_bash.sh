@@ -36,7 +36,7 @@ _ub_cksum_special_derivativeScripts_contents() {
 #export ub_setScriptChecksum_disable='true'
 ( [[ -e "$0".nck ]] || [[ "${BASH_SOURCE[0]}" != "${0}" ]] || [[ "$1" == '--profile' ]] || [[ "$1" == '--script' ]] || [[ "$1" == '--call' ]] || [[ "$1" == '--return' ]] || [[ "$1" == '--devenv' ]] || [[ "$1" == '--shell' ]] || [[ "$1" == '--bypass' ]] || [[ "$1" == '--parent' ]] || [[ "$1" == '--embed' ]] || [[ "$1" == '--compressed' ]] || [[ "$0" == "/bin/bash" ]] || [[ "$0" == "-bash" ]] || [[ "$0" == "/usr/bin/bash" ]] || [[ "$0" == "bash" ]] ) && export ub_setScriptChecksum_disable='true'
 export ub_setScriptChecksum_header='2591634041'
-export ub_setScriptChecksum_contents='3551816200'
+export ub_setScriptChecksum_contents='2602465101'
 
 # CAUTION: Symlinks may cause problems. Disable this test for such cases if necessary.
 # WARNING: Performance may be crucial here.
@@ -1932,6 +1932,75 @@ _package-cygwin() {
 
 
 
+
+
+
+
+# Discouraged. Few file paths, some setup, etc, may be different. Otherwise, WSL should not be treated differently.
+_if_wsl() {
+    uname -a | grep -i 'microsoft' > /dev/null 2>&1 || uname -a | grep -i 'WSL2' > /dev/null 2>&1
+}
+
+
+
+# Ingredients. Debian pacakges mirror, docker images, pre-built dist/OS images, etc.
+_set_ingredients() {
+    export ub_INGREDIENTS=""
+
+    local currentDriveLetter
+
+    if ! _if_cygwin
+    then
+        [[ -e /mnt/ingredients/ingredients ]] && mountpoint /mnt/ingredients && export ub_INGREDIENTS=/mnt/ingredients/ingredients && return 0
+
+        # STRONGLY PREFERRED.
+        [[ -e /mnt/ingredients ]] && mountpoint /mnt/ingredients && export ub_INGREDIENTS=/mnt/ingredients && return 0
+
+        # STRONGLY DISCOURAGED.
+        # Do NOT create "$HOME"/core/ingredients unless for some very unexpected reason it is necessary for a non-root user to use ingredients.
+        [[ -e "$HOME"/core/ingredients ]] && export ub_INGREDIENTS="$HOME"/core/ingredients && return 0
+
+        # WSL(2) specific.
+        #_if_wsl
+        #uname -a | grep -i 'microsoft' > /dev/null 2>&1 || uname -a | grep -i 'WSL2' > /dev/null 2>&1
+        if type _if_wsl > /dev/null 2>&1 && _if_wsl
+        then
+            [[ -e /mnt/host/z/mnt/ingredients ]] && export ub_INGREDIENTS=/mnt/host/z/mnt/ingredients && return 0
+            [[ -e /mnt/z/mnt/ingredients ]] && export ub_INGREDIENTS=/mnt/z/mnt/ingredients && return 0
+            [[ -e /mnt/c/core/ingredients ]] && export ub_INGREDIENTS=/mnt/c/core/ingredients && return 0
+            [[ -e /mnt/host/c/core/ingredients ]] && export ub_INGREDIENTS=/mnt/host/c/core/ingredients && return 0
+            #
+            for currentDriveLetter in d e f g h i j k l m n o p q r s t u v w D E F G H I J K L M N O P Q R S T U V W
+            do
+                [[ -e /mnt/"$currentDriveLetter"/ingredients ]] && export ub_INGREDIENTS=/mnt/"$currentDriveLetter"/ingredients && return 0
+            done
+            if [[ -e /mnt/host ]]
+            then
+                for currentDriveLetter in d e f g h i j k l m n o p q r s t u v w D E F G H I J K L M N O P Q R S T U V W
+                do
+                    [[ -e /mnt/host/"$currentDriveLetter"/ingredients ]] && export ub_INGREDIENTS=/mnt/host/"$currentDriveLetter"/ingredients && return 0
+                done
+            fi
+        fi
+    fi
+
+    if _if_cygwin
+    then
+        [[ -e /cygdrive/z/mnt/ingredients ]] && export ub_INGREDIENTS=/cygdrive/z/mnt/ingredients && return 0
+        [[ -e /cygdrive/c/core/ingredients ]] && export ub_INGREDIENTS=/cygdrive/c/core/ingredients && return 0
+        #
+        for currentDriveLetter in d e f g h i j k l m n o p q r s t u v w D E F G H I J K L M N O P Q R S T U V W
+        do
+            [[ -e /cygdrive/"$currentDriveLetter"/ingredients ]] && export ub_INGREDIENTS=/cygdrive/"$currentDriveLetter"/ingredients && return 0
+        done
+    fi
+
+
+
+
+    [[ "$ub_INGREDIENTS" == "" ]] && return 1
+    return 0
+}
 
 
 
@@ -6190,8 +6259,8 @@ _setup_ssh_copyKey() {
 		chmod 600 "$scriptLocal"/ssh/"$sshKeyName"
 		chmod 600 "$scriptLocal"/ssh/"$sshKeyName".pub > /dev/null 2>&1
 		
-		cp --update=none "$scriptLocal"/ssh/"$sshKeyName" "$sshLocalSSH"/"$sshKeyName"
-		cp --update=none "$scriptLocal"/ssh/"$sshKeyName".pub "$sshLocalSSH"/"$sshKeyName".pub > /dev/null 2>&1
+		cp --no-clobber "$scriptLocal"/ssh/"$sshKeyName" "$sshLocalSSH"/"$sshKeyName"
+		cp --no-clobber "$scriptLocal"/ssh/"$sshKeyName".pub "$sshLocalSSH"/"$sshKeyName".pub > /dev/null 2>&1
 		
 		return 0
 	fi
@@ -6201,8 +6270,8 @@ _setup_ssh_copyKey() {
 		chmod 600 "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName"
 		chmod 600 "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName".pub > /dev/null 2>&1
 		
-		cp --update=none "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName" "$sshLocalSSH"/"$sshKeyName"
-		cp --update=none "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName".pub "$sshLocalSSH"/"$sshKeyName".pub > /dev/null 2>&1
+		cp --no-clobber "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName" "$sshLocalSSH"/"$sshKeyName"
+		cp --no-clobber "$scriptLocal"/ssh/"$sshKeyLocalSubdirectory""$sshKeyName".pub "$sshLocalSSH"/"$sshKeyName".pub > /dev/null 2>&1
 		
 		return 0
 	fi
@@ -9929,14 +9998,14 @@ _fetchDep_debianBookworm_special() {
 
 		
 		# WARNING: Untested. May cause problems.
-		#_getMost_backend_aptGetInstall docker-ce
-		##_getMost_backend_aptGetInstall docker-compose-plugin
-		#_getMost_backend_aptGetInstall docker-ce
-		#_getMost_backend_aptGetInstall docker-buildx-plugin docker-ce-cli docker-ce-rootless-extras
-		_getMost_backend apt-get -d install -y docker-ce
-		#_getMost_backend apt-get -d install -y docker-compose-plugin
-		_getMost_backend apt-get -d install -y docker-ce
-		#_getMost_backend apt-get -d install -y docker-buildx-plugin docker-ce-cli docker-ce-rootless-extras
+		##_getMost_backend_aptGetInstall docker-ce
+		###_getMost_backend_aptGetInstall docker-compose-plugin
+		##_getMost_backend_aptGetInstall docker-ce
+		##_getMost_backend_aptGetInstall docker-buildx-plugin docker-ce-cli docker-ce-rootless-extras
+		#_getMost_backend apt-get -d install -y docker-ce
+		##_getMost_backend apt-get -d install -y docker-compose-plugin
+		#_getMost_backend apt-get -d install -y docker-ce
+		##_getMost_backend apt-get -d install -y docker-buildx-plugin docker-ce-cli docker-ce-rootless-extras
 
 		# ATTENTION: Speculative . May be untested. Enable if ever necessary.
 		#https://docs.docker.com/compose/install/
@@ -10103,7 +10172,7 @@ CZXWXcRMTo8EmM8i4d
 			curl -L "https://deb.debian.org/debian/pool/main/d/digimend-dkms/digimend-dkms_11-3_amd64.deb" -o "$safeTmp"/"digimend-dkms_11-3_amd64.deb"
 			yes | sudo -n dpkg -i "$safeTmp"/"digimend-dkms_11-3_amd64.deb"
 			sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y -f
-			sudo rm -f "$safeTmp"/"digimend-dkms_11-3_amd64.deb"
+			sudo -n rm -f "$safeTmp"/"digimend-dkms_11-3_amd64.deb"
 		fi
 		
 		return 0
@@ -10149,6 +10218,25 @@ CZXWXcRMTo8EmM8i4d
 		! _wantDep 'nc' && echo 'warn: missing: nc'
 		
 		return 0
+	fi
+
+	if [[ "$1" == "curlftpfs" ]]
+	then
+		if [[ -e "$HOME"/"core/installations/curlftpfs/curlftpfs_0.9.2-9+b1_amd64.deb" ]]
+		then
+			yes | sudo -n dpkg -i "$HOME"/"core/installations/curlftpfs/curlftpfs_0.9.2-9+b1_amd64.deb"
+		fi
+
+		if ! [[ -e "$HOME"/"core/installations/curlftpfs/curlftpfs_0.9.2-9+b1_amd64.deb" ]]
+		then
+			curl -L 'http://deb.debian.org/debian/pool/main/c/curlftpfs/curlftpfs_0.9.2-9+b1_amd64.deb' -o "$safeTmp"/"curlftpfs_0.9.2-9+b1_amd64.deb"
+			yes | sudo -n dpkg -i "$safeTmp"/"curlftpfs_0.9.2-9+b1_amd64.deb"
+		fi
+		
+		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y -f
+		sudo -n rm -f "$safeTmp"/"curlftpfs_0.9.2-9+b1_amd64.deb"
+		
+		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y curlftpfs
 	fi
 	
 	
@@ -10202,512 +10290,73 @@ _fetchDep_debianBookworm_sequence() {
 
 _fetchDep_debianBookworm() {
 	# https://askubuntu.com/questions/104899/make-apt-get-or-aptitude-run-with-y-but-not-prompt-for-replacement-of-configu
-	echo 'Dpkg::Options {"--force-confdef"};' | sudo tee /etc/apt/apt.conf.d/50unattended-replaceconfig-ub > /dev/null
-	echo 'Dpkg::Options {"--force-confold"};' | sudo tee -a /etc/apt/apt.conf.d/50unattended-replaceconfig-ub > /dev/null
-	
-	export DEBIAN_FRONTEND=noninteractive
-	
-	#Run up to 2 times. On rare occasion, cache will become unusable again by apt-find before an installation can be completed. Overall, apt-find is the single weakest link in the system.
-	"$scriptAbsoluteLocation" _fetchDep_debianBookworm_sequence "$@"
-	"$scriptAbsoluteLocation" _fetchDep_debianBookworm_sequence "$@"
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-_fetchDep_debianBullseye_special() {
-	sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -y update
-	
-# 	if [[ "$1" == *"java"* ]]
-# 	then
-# 		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y default-jdk default-jre
-# 		return 0
-# 	fi
-	
-	if [[ "$1" == *"wine"* ]] && ! dpkg --print-foreign-architectures | grep i386 > /dev/null 2>&1
-	then
-		sudo -n dpkg --add-architecture i386
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -y update
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y wine wine32 wine64 libwine libwine:i386 fonts-wine
-		return 0
-	fi
-	
-	if [[ "$1" == "realpath" ]] || [[ "$1" == "readlink" ]] || [[ "$1" == "dirname" ]] || [[ "$1" == "basename" ]] || [[ "$1" == "sha512sum" ]] || [[ "$1" == "sha256sum" ]] || [[ "$1" == "head" ]] || [[ "$1" == "tail" ]] || [[ "$1" == "sleep" ]] || [[ "$1" == "env" ]] || [[ "$1" == "cat" ]] || [[ "$1" == "mkdir" ]] || [[ "$1" == "dd" ]] || [[ "$1" == "rm" ]] || [[ "$1" == "ln" ]] || [[ "$1" == "ls" ]] || [[ "$1" == "test" ]] || [[ "$1" == "true" ]] || [[ "$1" == "false" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y coreutils
-		return 0
-	fi
-	
-	if [[ "$1" == "mount" ]] || [[ "$1" == "umount" ]] || [[ "$1" == "losetup" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y mount
-		return 0
-	fi
-	
-	if [[ "$1" == "mountpoint" ]] || [[ "$1" == "mkfs" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y util-linux
-		return 0
-	fi
-	
-	if [[ "$1" == "mkfs.ext4" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y e2fsprogs
-		return 0
-	fi
-	
-	if [[ "$1" == "parted" ]] || [[ "$1" == "partprobe" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y parted
-		return 0
-	fi
-	
-	if [[ "$1" == "qemu-arm-static" ]] || [[ "$1" == "qemu-armeb-static" ]] || [[ "$1" == "update-binfmts" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y qemu qemu-user-static binfmt-support
-		#update-binfmts --display
-		return 0
-	fi
-	
-	if [[ "$1" == "qemu-system-x86_64" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y qemu-system-x86
-		return 0
-	fi
-	
-	if [[ "$1" == "qemu-img" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y qemu-utils
-		return 0
-	fi
-	
-	if [[ "$1" == "VirtualBox" ]] || [[ "$1" == "VBoxSDL" ]] || [[ "$1" == "VBoxManage" ]] || [[ "$1" == "VBoxHeadless" ]]
-	then
-		sudo -n mkdir -p /etc/apt/sources.list.d
-		echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian bullseye contrib' | sudo -n tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
-		
-		"$scriptAbsoluteLocation" _getDep wget
-		! _wantDep wget && return 1
-		
-		# TODO Check key fingerprints match "B9F8 D658 297A F3EF C18D  5CDF A2F6 83C5 2980 AECF" and "7B0F AB3A 13B9 0743 5925  D9C9 5442 2A4B 98AB 5139" respectively.
-		wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo -n apt-key add -
-		wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo -n apt-key add -
-		
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -y update
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y dkms virtualbox-6.1
-		
-		# https://www.virtualbox.org/ticket/20949
-		if ! type -p virtualbox > /dev/null 2>&1 && ! type -p VirtualBox > /dev/null 2>&1
-		then
-			curl -L "https://download.virtualbox.org/virtualbox/6.1.34/virtualbox-6.1_6.1.34-150636.1~Debian~bullseye_amd64.deb" -o "$safeTmp"/"virtualbox-6.1_6.1.34-150636.1~Debian~bullseye_amd64.deb"
-			sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y dkms
-			yes | sudo -n dpkg -i "$safeTmp"/"virtualbox-6.1_6.1.34-150636.1~Debian~bullseye_amd64.deb"
-			sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y -f
-		fi
-		
-		echo "WARNING: Recommend manual system configuration after install. See https://www.virtualbox.org/wiki/Downloads ."
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "gpg" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y gnupg
-		return 0
-	fi
-	
-	#Unlikely scenario for hosts.
-	if [[ "$1" == "grub-install" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y grub2
-		#sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y grub-legacy
-		return 0
-	fi
-	
-	if [[ "$1" == "MAKEDEV" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y makedev
-		return 0
-	fi
-	
-	if [[ "$1" == "fgrep" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y grep
-		return 0
-	fi
-	
-	if [[ "$1" == "fgrep" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y grep
-		return 0
-	fi
-	
-	if [[ "$1" == "awk" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y mawk
-		return 0
-	fi
-	
-	if [[ "$1" == "kill" ]] || [[ "$1" == "ps" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y procps
-		return 0
-	fi
-	
-	if [[ "$1" == "find" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y findutils
-		return 0
-	fi
-	
-	if [[ "$1" == "docker" ]] || [[ "$1" == "docker-compose" ]]
-	then
-		sudo -n update-alternatives --set iptables /usr/sbin/iptables-legacy
-		sudo -n update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-		#sudo -n systemctl restart docker
-		
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y apt-transport-https ca-certificates curl gnupg2 software-properties-common
-		
-		# Sometimes may be useful as a workaround for docker 'overlay2' 'storage-driver' .
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y fuse-overlayfs
-		
-		"$scriptAbsoluteLocation" _getDep curl
-		! _wantDep curl && return 1
-		
-		curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | sudo -n apt-key add -
-		local aptKeyFingerprint
-		aptKeyFingerprint=$(sudo -n apt-key fingerprint 0EBFCD88 2> /dev/null)
-		[[ "$aptKeyFingerprint" == "" ]] && return 1
-		
-		sudo -n add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
-		
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -y update
-		
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get remove -y docker docker-engine docker.io docker-ce docker
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y docker-ce
-		
-		sudo -n usermod -a -G docker "$USER"
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "smbd" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y samba
-		return 0
-	fi
-	
-	if [[ "$1" == "atom" ]]
-	then
-		#curl -L https://packagecloud.io/AtomEditor/atom/gpgkey | sudo -n apt-key add -
-		#sudo -n sh -c 'echo "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main" > /etc/apt/sources.list.d/ub_atom.list'
-		
-		#sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -y update
-		
-		#sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y atom
-		
-		#return 0
-		return 1
-	fi
-	
-	if [[ "$1" == "GL/gl.h" ]] || [[ "$1" == "GL/glext.h" ]] || [[ "$1" == "GL/glx.h" ]] || [[ "$1" == "GL/glxext.h" ]] || [[ "$1" == "GL/dri_interface.h" ]] || [[ "$1" == "x86_64-linux-gnu/pkgconfig/dri.pc" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y mesa-common-dev
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "go" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y golang-go
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "php" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y php
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "cura-lulzbot" ]]
-	then
-		#Testing/Sid only as of Stretch release cycle.
-		#sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y rustc cargo
-		
-		echo "Requires manual installation. See https://www.lulzbot.com/learn/tutorials/cura-lulzbot-edition-installation-debian ."
-cat << 'CZXWXcRMTo8EmM8i4d'
-wget -qO - https://download.alephobjects.com/ao/aodeb/aokey.pub | sudo -n apt-key add -
-sudo -n cp /etc/apt/sources.list /etc/apt/sources.list.bak && sudo -n sed -i '$a deb http://download.alephobjects.com/ao/aodeb jessie main' /etc/apt/sources.list && sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -y update && sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install cura-lulzbot
-CZXWXcRMTo8EmM8i4d
-		echo "(typical)"
-		_stop 1
-	fi
-	
-	if [[ "$1" =~ "FlashPrint" ]]
-	then
-		#Testing/Sid only as of Stretch release cycle.
-		#sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y rustc cargo
-		
-		echo "Requires manual installation. See http://www.flashforge.com/support-center/flashprint-support/ ."
-		_stop 1
-	fi
-	
-	if [[ "$1" == "cargo" ]] || [[ "$1" == "rustc" ]]
-	then
-		#Testing/Sid only as of Stretch release cycle.
-		#sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y rustc cargo
-		
-		echo "Requires manual installation."
-cat << 'CZXWXcRMTo8EmM8i4d'
-curl https://sh.rustup.rs -sSf | sh
-echo '[[ -e "$HOME"/.cargo/bin ]] && export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
-CZXWXcRMTo8EmM8i4d
-		echo "(typical)"
-		_stop 1
-	fi
-	
-	if [[ "$1" == "firejail" ]]
-	then
-		echo "WARNING: Recommend manual system configuration after install. See https://firejail.wordpress.com/download-2/ ."
-		echo "WARNING: Desktop override symlinks may cause problems, especially preventing proxy host jumping by CoreAutoSSH!"
-		return 1
-	fi
-	
-	
-	if [[ "$1" == "nix-env" ]]
-	then
-		_tryExec '_test_nix-env_upstream'
-		#_tryExec '_test_nix-env_upstream_beta'
-		
-		return 0
-	fi
-	
-	
-	if [[ "$1" == "croc" ]]
-	then
-		_tryExec '_test_croc_upstream'
-		#_tryExec '_test_croc_upstream_beta'
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "rclone" ]]
-	then
-		_tryExec '_test_rclone_upstream'
-		#_tryExec '_test_rclone_upstream_beta'
-		
-		return 0
-	fi
-	
-	
-	if [[ "$1" == "terraform" ]]
-	then
-		curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo -n apt-key add -
-		sudo -n apt-add-repository -y "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -y update
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y terraform
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "vagrant" ]]
-	then
-		#curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo -n apt-key add -
-		#sudo -n apt-add-repository -y "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-		#sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -y update
-		
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y vagrant-libvirt
-		
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y vagrant
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "digimend-debug" ]] || [[ "$1" == 'udev/rules.d/90-digimend.rules' ]] || [[ "$1" == 'X11/xorg.conf.d/50-digimend.conf' ]]
-	then
-		if ! _wantDep digimend-debug && [[ -e /etc/issue ]] && cat /etc/issue | grep 'Debian' > /dev/null 2>&1
-		then
-			if [[ -e "$HOME"/core/installations/digimend-dkms/digimend-dkms_10_all.deb ]]
-			then
-				yes | sudo -n dpkg -i "$HOME"/core/installations/digimend-dkms/digimend-dkms_10_all.deb
-			fi
-			
-			sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y digimend-dkms
-			
-			curl -L "https://github.com/DIGImend/digimend-kernel-drivers/releases/download/v10/digimend-dkms_10_all.deb" -o "$safeTmp"/"digimend-dkms_10_all.deb"
-			yes | sudo -n dpkg -i "$safeTmp"/"digimend-dkms_10_all.deb"
-			sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y -f
-			sudo rm -f "$safeTmp"/"digimend-dkms_10_all.deb"
-		fi
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "openssl/ssl.h" ]] || [[ "$1" == "include/openssl/ssl.h" ]] || [[ "$1" == "/usr/include/openssl/ssl.h" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y libssl-dev
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "sqlite3.h" ]] || [[ "$1" == "sqlite3ext.h" ]] || [[ "$1" == "pkgconfig/sqlite3.pc" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y libsqlite3-dev
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "qalculate-gtk" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y qalculate-gtk
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y -t bullseye-backports qalc
-		
-		! _wantDep 'qalculate-gtk' && echo 'warn: missing: qalculate-gtk'
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "qalc" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y -t bullseye-backports qalc
-		
-		! _wantDep 'qalc' && echo 'warn: missing: qalc'
-		
-		return 0
-	fi
-	
-	if [[ "$1" == "nc" ]]
-	then
-		sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y netcat-openbsd
-		
-		! _wantDep 'nc' && echo 'warn: missing: nc'
-		
-		return 0
-	fi
-	
-	
-	return 1
-}
-
-_fetchDep_debianBullseye_sequence() {
-	_start
-	
-	_mustGetSudo
-	
-	_wantDep "$1" && _stop 0
-	
-	_fetchDep_debianBullseye_special "$@" && _wantDep "$1" && _stop 0
-	
-	sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y "$1" && _wantDep "$1" && _stop 0
-	
-	_apt-file search "$1" > "$safeTmp"/pkgsOut 2> "$safeTmp"/pkgsErr
-	
-	local sysPathAll
-	sysPathAll=$(sudo -n bash -c "echo \$PATH")
-	sysPathAll="$PATH":"$sysPathAll"
-	local sysPathArray
-	IFS=':' read -r -a sysPathArray <<< "$sysPathAll"
-	
-	local currentSysPath
-	local matchingPackageFile
-	local matchingPackagePattern
-	local matchingPackage
-	for currentSysPath in "${sysPathArray[@]}"
-	do
-		matchingPackageFile=""
-		matchingPackagePath=""
-		matchingPackage=""
-		matchingPackagePattern="$currentSysPath"/"$1"
-		matchingPackageFile=$(grep ': '$matchingPackagePattern'$' "$safeTmp"/pkgsOut | cut -f2- -d' ')
-		matchingPackage=$(grep ': '$matchingPackagePattern'$' "$safeTmp"/pkgsOut | cut -f1 -d':')
-		if [[ "$matchingPackage" != "" ]]
-		then
-			sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y "$matchingPackage"
-			_wantDep "$1" && _stop 0
-		fi
-	done
-	matchingPackage=""
-	matchingPackage=$(head -n 1 "$safeTmp"/pkgsOut | cut -f1 -d':')
-	sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install --install-recommends -y "$matchingPackage"
-	_wantDep "$1" && _stop 0
-	
-	_stop 1
-}
-
-_fetchDep_debianBullseye() {
-	# ATTRIBUTION-AI: ChatGPT o1-preview 2024-11-20 .
-	echo 'APT::AutoRemove::RecommendsImportant "true";
-APT::AutoRemove::SuggestsImportant "true";' | sudo -n tee /etc/apt/apt.conf.d/99autoremove-recommends > /dev/null
-
-	
-	# https://askubuntu.com/questions/104899/make-apt-get-or-aptitude-run-with-y-but-not-prompt-for-replacement-of-configu
 	echo 'Dpkg::Options {"--force-confdef"};' | sudo -n tee /etc/apt/apt.conf.d/50unattended-replaceconfig-ub > /dev/null
 	echo 'Dpkg::Options {"--force-confold"};' | sudo -n tee -a /etc/apt/apt.conf.d/50unattended-replaceconfig-ub > /dev/null
 	
 	export DEBIAN_FRONTEND=noninteractive
 	
 	#Run up to 2 times. On rare occasion, cache will become unusable again by apt-find before an installation can be completed. Overall, apt-find is the single weakest link in the system.
-	"$scriptAbsoluteLocation" _fetchDep_debianBullseye_sequence "$@"
-	"$scriptAbsoluteLocation" _fetchDep_debianBullseye_sequence "$@"
+	"$scriptAbsoluteLocation" _fetchDep_debianBookworm_sequence "$@"
+	"$scriptAbsoluteLocation" _fetchDep_debianBookworm_sequence "$@"
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -10761,12 +10410,13 @@ _fetchDep_debian() {
 	#fi
 	
 	
-	# WARNING: Obsolete. Declining support. Eventual removal expected approximately one year after two Debian stable releases.
-	if [[ -e /etc/debian_version ]] && cat /etc/debian_version | head -c 2 | grep 11 > /dev/null 2>&1
-	then
-		_fetchDep_debianBullseye "$@"
-		return
-	fi
+	# WARNING: Obsolete. Disabled.
+	# ATTENTION: May be revived if important deployments of Debian Bullseye are discovered to still exist. Revive from '_ref/debian_bullseye.sh' if necessary.
+	#if [[ -e /etc/debian_version ]] && cat /etc/debian_version | head -c 2 | grep 11 > /dev/null 2>&1
+	#then
+		#_fetchDep_debianBullseye "$@"
+		#return
+	#fi
 
 
 	if [[ -e /etc/debian_version ]] && cat /etc/debian_version | head -c 2 | grep 12 > /dev/null 2>&1
@@ -11347,8 +10997,8 @@ _getMost_debian11_aptSources() {
 		wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
 		echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian bullseye contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
 		
-		curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
 		echo 'deb [arch=amd64] https://download.docker.com/linux/debian bullseye stable' | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+		curl -fsSL https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"')/gpg | _getMost_backend apt-key add -
 		
 		## https://fasttrack.debian.net/
 		#if ! grep 'fasttrack' /etc/apt/sources.list
@@ -11366,9 +11016,9 @@ _getMost_debian11_aptSources() {
 		wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
 		echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian focal contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
 		
-		curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
-		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
-		echo "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+		curl -fsSL https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"')/gpg | _getMost_backend apt-key add -
+		echo "deb [arch=amd64] https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"') $(_getMost_backend bash -c 'lsb_release -cs') stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"') $(_getMost_backend bash -c 'lsb_release -cs') stable"
 	elif [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '22.04' > /dev/null 2>&1
 	then
 		true
@@ -11377,12 +11027,12 @@ _getMost_debian11_aptSources() {
 		wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
 		echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian jammy contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
 		
-		curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
-		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
-		echo "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+		curl -fsSL https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"')/gpg | _getMost_backend apt-key add -
+		echo "deb [arch=amd64] https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"') $(_getMost_backend bash -c 'lsb_release -cs') stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"') $(_getMost_backend bash -c 'lsb_release -cs') stable"
 	fi
 	
-	curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
+	curl -fsSL https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"')/gpg | _getMost_backend apt-key add -
 	_getMost_backend wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | _getMost_backend apt-key add -
 	_getMost_backend wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
 }
@@ -11411,7 +11061,7 @@ _getMost_debian12_aptSources() {
 		wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
 		echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian bookworm contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
 		
-		curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
+		curl -fsSL https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"')/gpg | _getMost_backend apt-key add -
 		echo 'deb [arch=amd64] https://download.docker.com/linux/debian bookworm stable' | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
 		
 		## https://fasttrack.debian.net/
@@ -11422,6 +11072,9 @@ _getMost_debian12_aptSources() {
 			#echo 'deb https://fasttrack.debian.net/debian-fasttrack/ bookworm-backports-staging main contrib' | _getMost_backend tee -a /etc/apt/sources.list
 		#fi
 		
+		# https://github.com/wireapp/wire-desktop/wiki/How-to-install-Wire-for-Desktop-on-Linux
+		#wget -q https://wire-app.wire.com/linux/releases.key -O- | sudo -n apt-key add -
+		#echo "deb [arch=amd64] https://wire-app.wire.com/linux/debian stable main" | sudo -n tee /etc/apt/sources.list.d/wire-desktop.list
 	fi
 	if [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '20.04' > /dev/null 2>&1
 	then
@@ -11431,9 +11084,9 @@ _getMost_debian12_aptSources() {
 		wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
 		echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian focal contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
 		
-		curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
-		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
-		echo "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+		curl -fsSL https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"')/gpg | _getMost_backend apt-key add -
+		echo "deb [arch=amd64] https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"') $(_getMost_backend bash -c 'lsb_release -cs') stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"') $(_getMost_backend bash -c 'lsb_release -cs') stable"
 	fi
 	if [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '22.04' > /dev/null 2>&1
 	then
@@ -11443,9 +11096,9 @@ _getMost_debian12_aptSources() {
 		wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
 		echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian jammy contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
 		
-		curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
-		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
-		echo "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+		curl -fsSL https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"')/gpg | _getMost_backend apt-key add -
+		echo "deb [arch=amd64] https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"') $(_getMost_backend bash -c 'lsb_release -cs') stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"') $(_getMost_backend bash -c 'lsb_release -cs') stable"
 	fi
 	if [[ -e /etc/issue ]] && cat /etc/issue | grep 'Ubuntu' | grep '24.04' > /dev/null 2>&1
 	then
@@ -11455,12 +11108,12 @@ _getMost_debian12_aptSources() {
 		wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
 		echo 'deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian noble contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_vbox.list > /dev/null 2>&1
 		
-		curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
-		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
-		echo "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+		curl -fsSL https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"')/gpg | _getMost_backend apt-key add -
+		echo "deb [arch=amd64] https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"') $(_getMost_backend bash -c 'lsb_release -cs') stable" | _getMost_backend tee /etc/apt/sources.list.d/ub_docker.list > /dev/null 2>&1
+		_getMost_backend add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"') $(_getMost_backend bash -c 'lsb_release -cs') stable"
 	fi
 	
-	curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | _getMost_backend apt-key add -
+	curl -fsSL https://download.docker.com/linux/$(_getMost_backend bash -c '. /etc/os-release; echo "$ID"')/gpg | _getMost_backend apt-key add -
 	_getMost_backend wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | _getMost_backend apt-key add -
 	_getMost_backend wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _getMost_backend apt-key add -
 }
@@ -11486,7 +11139,7 @@ _getMost_debian12_install() {
 	# CAUTION: Workaround. Debian defaults to an obsolete version of qalc which is unusable.
 	_getMost_backend_aptGetInstall -t bookworm-backports qalc
 
-
+	#_getMost_backend_aptGetInstall wire-desktop
 
 	# ATTENTION: SEVERE: Cause for concern. Absence of this is not properly detected by '_getDep python', '_getDep /usr/bin/python'  .
 	_getMost_backend_aptGetInstall python-is-python3
@@ -11526,6 +11179,8 @@ _getMost_debian11_install() {
 	_getMost_backend_aptGetInstall bash dash
 
 	_getMost_backend_aptGetInstall aria2 curl gpg
+	_getMost_backend_aptGetInstall gnupg
+	_getMost_backend_aptGetInstall lsb-release
 
 	if ! _getMost_backend dash -c 'type apt-fast' > /dev/null 2>&1
 	then
@@ -11549,6 +11204,9 @@ _getMost_debian11_install() {
 	# May be able to resize with some combination of 'dd' and 'gparted' , possibly '_gparted' . May be untested.
 	#_messagePlain_probe 'apt-get upgrade'
 	#_getMost_backend apt-get upgrade
+
+	# https://github.com/wireapp/wire-desktop/wiki/How-to-install-Wire-for-Desktop-on-Linux
+	_getMost_backend_aptGetInstall apt-transport-https
 	
 	
 	_getMost_backend_aptGetInstall locales-all
@@ -11572,7 +11230,15 @@ _getMost_debian11_install() {
 	_getMost_backend_aptGetInstall sockstat
 	_getMost_backend_aptGetInstall x11-xserver-utils
 	_getMost_backend_aptGetInstall arandr
-	
+
+	if _getMost_backend_fileExists "/curlftpfs_0.9.2-9+b1_amd64.deb"
+	then
+		_getMost_backend dpkg -i "/curlftpfs_0.9.2-9+b1_amd64.deb"
+		_getMost_backend rm -f "/curlftpfs_0.9.2-9+b1_amd64.deb"
+		_getMost_backend env DEBIAN_FRONTEND=noninteractive apt-get install -y -f
+	fi
+
+	_getMost_backend_aptGetInstall curlftpfs
 
 	_getMost_backend_aptGetInstall liblinear4 liblua5.3-0 lua-lpeg nmap nmap-common
 	
@@ -11591,6 +11257,8 @@ _getMost_debian11_install() {
 	#_getMost_backend_aptGetInstall synergy quicksynergy
 	
 	_getMost_backend_aptGetInstall vim
+
+	_getMost_backend_aptGetInstall man-db
 	
 	# WARNING: Rust is not yet (2023-11-12) anywhere near as editable on the fly or pervasively available as bash .
 	#  Criteria for such are far more necessarily far more stringent than might be intuitively obvious.
@@ -11813,6 +11481,8 @@ _getMost_debian11_install() {
 	
 	_getMost_backend_aptGetInstall p7zip
 	_getMost_backend_aptGetInstall p7zip-full
+	_getMost_backend_aptGetInstall unzip zip
+	_getMost_backend_aptGetInstall lbzip2
 
 	
 	_getMost_backend_aptGetInstall jp2a
@@ -11894,7 +11564,8 @@ _getMost_debian11_install() {
 	# WARNING: If VirtualBox was not installed by now (eg. due to 'if false' comment block or wrong distribution), this must be called later.
 	# https://en.wiktionary.org/wiki/poke_the_bear
 	# https://forums.virtualbox.org/viewtopic.php?t=25797
-	_getMost_backend VBoxManage setextradata global GUI/SuppressMessages "Update"
+	_getMost_backend /usr/bin/VBoxManage setextradata global GUI/SuppressMessages "Update"
+	_getMost_backend /usr/local/bin/VBoxManage setextradata global GUI/SuppressMessages "Update"
 	
 	
 	
@@ -13253,27 +12924,32 @@ _get_from_nix-user() {
 		
 		current_getMost_backend_wasSet="false"
 	fi
+
+
+	# ATTENTION: Though otherwise bad practice, some particularly both crucial and non-standard or particular version packages, such as 'geda', but also 'package_kde.tar.xz', are kept in "$HOME" . Thus,  bash -c 'cd ; ', followed by wget, etc, can be appropriate.
+
 	
 	# . "$HOME"/.nix-profile/etc/profile.d/nix.sh
 
 
 	#_nix_fetch_alternatives
-	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c '[[ ! -e geda-gaf-1.10.2.tar.gz ]] && wget ftp.geda-project.org/geda-gaf/stable/v1.10/1.10.2/geda-gaf-1.10.2.tar.gz'
-	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c '[[ ! -e geda-gaf-1.10.2.tar.gz ]] && wget https://web.archive.org/web/20230413214011/http://ftp.geda-project.org/geda-gaf/stable/v1.10/1.10.2/geda-gaf-1.10.2.tar.gz'
-	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c '[[ ! -e geda-gaf-1.10.2.tar.gz ]] && wget https://web.archive.org/web/http://ftp.geda-project.org/geda-gaf/stable/v1.10/1.10.2/geda-gaf-1.10.2.tar.gz'
-	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c '[[ ! -e geda-gaf-1.10.2.tar.gz ]] && wget https://github.com/soaringDistributions/ubDistBuild_bundle/raw/main/geda-gaf/geda-gaf-1.10.2.tar.gz'
+	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; [[ ! -e geda-gaf-1.10.2.tar.gz ]] && wget ftp.geda-project.org/geda-gaf/stable/v1.10/1.10.2/geda-gaf-1.10.2.tar.gz'
+	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; [[ ! -e geda-gaf-1.10.2.tar.gz ]] && wget https://web.archive.org/web/20230413214011/http://ftp.geda-project.org/geda-gaf/stable/v1.10/1.10.2/geda-gaf-1.10.2.tar.gz'
+	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; [[ ! -e geda-gaf-1.10.2.tar.gz ]] && wget https://web.archive.org/web/http://ftp.geda-project.org/geda-gaf/stable/v1.10/1.10.2/geda-gaf-1.10.2.tar.gz'
+	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; [[ ! -e geda-gaf-1.10.2.tar.gz ]] && wget https://github.com/soaringDistributions/ubDistBuild_bundle/raw/main/geda-gaf/geda-gaf-1.10.2.tar.gz'
 
-	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'nix-prefetch-url file://"$(~/.ubcore/ubiquitous_bash/ubiquitous_bash.sh _getAbsoluteLocation ./geda-gaf-1.10.2.tar.gz)"'
+	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; nix-prefetch-url file://"$(~/.ubcore/ubiquitous_bash/ubiquitous_bash.sh _getAbsoluteLocation ./geda-gaf-1.10.2.tar.gz)"'
+	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; nix-prefetch-url file:///home/'"$currentUser"'/geda-gaf-1.10.2.tar.gz'
 
 	#_nix_update
-	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'nix-channel --list'
-	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'nix-channel --update'
+	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; nix-channel --list'
+	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; nix-channel --update'
 
 	
 	# CAUTION: May correctly fail, due to marked insecure, due to CVE-2024-6775 , or similar. Do NOT force.
 	#_custom_installDeb /root/core/installations/Wire.deb
-	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'nix-env -iA nixpkgs.wire-desktop'
-	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'xdg-desktop-menu install "$HOME"/.nix-profile/share/applications/wire-desktop.desktop'
+	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; nix-env -iA nixpkgs.wire-desktop'
+	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; xdg-desktop-menu install "$HOME"/.nix-profile/share/applications/wire-desktop.desktop'
 	
 
 	_getMost_backend sudo -n -u "$currentUser" cp -a /home/"$currentUser"/.nix-profile/share/icons /home/"$currentUser"/.local/share/
@@ -13315,25 +12991,25 @@ _get_from_nix-user() {
 	
 	# ###
 	# Seems to have removed xorn, python2.7 . May not have been tested through ubdist/WSL . May be accepted for now due to some apparently successful testing expected to match this specific version.
-	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'export NIXPKGS_ALLOW_INSECURE=1 ; nix-env -iA geda -f https://github.com/NixOS/nixpkgs/archive/773a8314ef05364d856e46299722a9d849aacf8b.tar.gz'
+	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; export NIXPKGS_ALLOW_INSECURE=1 ; nix-env -iA geda -f https://github.com/NixOS/nixpkgs/archive/773a8314ef05364d856e46299722a9d849aacf8b.tar.gz'
 	
 	# Seems to still have xorn, python2.7, etc . Should have the most functionality, and should match previously tested versions, both through ubdist/OS and ubdist/WSL .
-	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'export NIXPKGS_ALLOW_INSECURE=1 ; nix-env -iA geda -f https://github.com/NixOS/nixpkgs/archive/9957cd48326fe8dbd52fdc50dd2502307f188b0d.tar.gz'
+	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; export NIXPKGS_ALLOW_INSECURE=1 ; nix-env -iA geda -f https://github.com/NixOS/nixpkgs/archive/9957cd48326fe8dbd52fdc50dd2502307f188b0d.tar.gz'
 	
 	# Most recent version. May freeze until there is sufficient experience with newer versions.
-	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'export NIXPKGS_ALLOW_INSECURE=1 ; nix-env -iA nixpkgs.geda'
+	#_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; export NIXPKGS_ALLOW_INSECURE=1 ; nix-env -iA nixpkgs.geda'
 	# ###
 	
 	
-	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'xdg-desktop-menu install "$HOME"/.nix-profile/share/applications/geda-gschem.desktop'
-	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'xdg-desktop-menu install "$HOME"/.nix-profile/share/applications/geda-gattrib.desktop'
+	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; xdg-desktop-menu install "$HOME"/.nix-profile/share/applications/geda-gschem.desktop'
+	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; xdg-desktop-menu install "$HOME"/.nix-profile/share/applications/geda-gattrib.desktop'
 	_getMost_backend sudo -n -u "$currentUser" cp -a /home/"$currentUser"/.nix-profile/share/icons /home/"$currentUser"/.local/share/
 
-	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'export NIXPKGS_ALLOW_INSECURE=1 ; nix-env -iA nixpkgs.pcb'
+	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; export NIXPKGS_ALLOW_INSECURE=1 ; nix-env -iA nixpkgs.pcb'
 
 	
 	# Necessary, do NOT remove. Necessary for 'gsch2pcb' , 'gnetlist' , etc, since installation as a dependency does not make the necessary binaries available to the usual predictable PATH .
-	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'export NIXPKGS_ALLOW_INSECURE=1 ; nix-env -iA nixpkgs.python2'
+	_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; export NIXPKGS_ALLOW_INSECURE=1 ; nix-env -iA nixpkgs.python2'
 
 
 	
@@ -13344,11 +13020,11 @@ _get_from_nix-user() {
 	# Workaround to make macros needed from 'pcb' package available to such programs as 'gsch2pcb' from the 'geda' package .
 	#sed 's/.*\/\(.*\)\/bin\/pcb.*/\1/')
 	local currentDerivationPath_pcb
-	currentDerivationPath_pcb=$(_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'readlink -f "$(type -p pcb)"')
+	currentDerivationPath_pcb=$(_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; readlink -f "$(type -p pcb)"')
 	currentDerivationPath_pcb=$(echo "$currentDerivationPath_pcb" | sed 's/\(.*\)\/bin\/pcb.*/\1/')
 
 	local currentDerivationPath_gsch2pcb
-	currentDerivationPath_gsch2pcb=$(_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'readlink -f "$(type -p gsch2pcb)"')
+	currentDerivationPath_gsch2pcb=$(_getMost_backend sudo -n -u "$currentUser" /bin/bash -l -c 'cd ; readlink -f "$(type -p gsch2pcb)"')
 	currentDerivationPath_gsch2pcb=$(echo "$currentDerivationPath_gsch2pcb" | sed 's/\(.*\)\/bin\/gsch2pcb.*/\1/')
 
 	_getMost_backend sudo -n cp -a "$currentDerivationPath_pcb"/share/pcb "$currentDerivationPath_gsch2pcb"/share/
@@ -13643,6 +13319,8 @@ _get_veracrypt() {
 	cd "$safeTmp"
 	
 	
+	_getDep lbzip2
+
 	_getDep libfuse.so.2
 	
 	
@@ -14879,16 +14557,25 @@ _test_bashdb() {
 
 
 _stopwatch() {
+	local currentExitStatus_bin
+	local currentExitStatus_self
+	
 	local measureDateA
 	local measureDateB
 	
 	measureDateA=$(date +%s%N | cut -b1-13)
 
 	"$@"
+	currentExitStatus_bin="$?"
 
 	measureDateB=$(date +%s%N | cut -b1-13)
 
 	bc <<< "$measureDateB - $measureDateA"
+	currentExitStatus_self="$?"
+
+	[[ "$currentExitStatus_bin" != "0" ]] && return "$currentExitStatus_bin"
+	[[ "$currentExitStatus_self" != "0" ]] && return "$currentExitStatus_self"
+	return 0
 }
 
 
@@ -19002,6 +18689,7 @@ _mountChRoot() {
 	_bindMountManager "/dev" "$absolute1"/dev
 	
 	#_bindMountManager "/proc" "$absolute1"/proc
+	sudo -n mkdir -p "$absolute1"/proc
 	sudo -n mount -t proc none "$absolute1"/proc
 	
 	_bindMountManager "/sys" "$absolute1"/sys
@@ -19011,6 +18699,7 @@ _mountChRoot() {
 	_bindMountManager "/tmp" "$absolute1"/tmp
 	
 	#Provide an shm filesystem at /dev/shm.
+	sudo -n mkdir -p "$absolute1"/dev/shm
 	sudo -n mount -t tmpfs -o size=4G tmpfs "$absolute1"/dev/shm
 	
 	#Install ubiquitous_bash itself to chroot.
@@ -19044,12 +18733,12 @@ _mountChRoot() {
 	
 	if [[ -e "$absolute1"/etc/resolv.conf ]] && [[ ! -e "$absolute1"/etc/resolv.conf.host ]] && [[ -e /etc/resolv.conf ]]
 	then
-		sudo -n cp --update=none "$absolute1"/etc/resolv.conf "$absolute1"/etc/resolv.conf.guest.bak
+		sudo -n cp --no-clobber "$absolute1"/etc/resolv.conf "$absolute1"/etc/resolv.conf.guest.bak
 		sudo -n mv -n "$absolute1"/etc/resolv.conf "$absolute1"/etc/resolv.conf.guest
 		
 		#if [[ ! -e "$absolute1"/etc/resolv.conf.host ]]
 		#then
-			sudo -n cp --update=none -L /etc/resolv.conf "$absolute1"/etc/resolv.conf.host
+			sudo -n cp --no-clobber -L /etc/resolv.conf "$absolute1"/etc/resolv.conf.host
 			#sudo -n cat /etc/resolv.conf | sudo tee "$absolute1"/etc/resolv.conf.host > /dev/null 2>&1
 		#fi
 		
@@ -19071,6 +18760,13 @@ _mountChRoot() {
 	then
 		echo '127.0.0.1 '"$HOSTNAME"' deleteme_chrootHost_hostname' | sudo -n tee -a "$absolute1"/etc/hosts > /dev/null 2>&1
 	fi
+
+
+	if _set_ingredients
+	then
+		sudo -n mkdir -p "$absolute1"/mnt/ingredients
+		_bindMountManager "$ub_INGREDIENTS" "$absolute1"/mnt/ingredients
+	fi
 	
 	return 0
 }
@@ -19084,6 +18780,9 @@ _umountChRoot() {
 	local absolute1
 	absolute1=$(_getAbsoluteLocation "$1")
 	
+	#_set_ingredients &&
+	mountpoint "$absolute1"/mnt/ingredients > /dev/null 2>&1 && _wait_umount "$absolute1"/mnt/ingredients
+	
 	# && [[ -e "$absolute1"/etc/resolv.conf ]]
 	if [[ -e "$absolute1"/etc/resolv.conf.guest ]] && [[ ! -e "$absolute1"/etc/resolv.conf.host ]]
 	then
@@ -19096,7 +18795,6 @@ _umountChRoot() {
 		sudo -n grep -v 'deleteme_chrootHost_hostname' "$absolute1"/etc/hosts | sudo -n tee "$absolute1"/etc/hosts.guest > /dev/null 2>&1
 		sudo -n mv -f "$absolute1"/etc/hosts.guest "$absolute1"/etc/hosts
 	fi
-	
 	
 	_wait_umount "$absolute1"/home/"$virtGuestUser"/project >/dev/null 2>&1
 	_wait_umount "$absolute1"/home/"$virtGuestUser" >/dev/null 2>&1
@@ -19200,7 +18898,7 @@ _mountChRoot_image_raspbian() {
 	sudo -n cp /usr/bin/qemu-arm-static "$chrootDir"/usr/bin/
 	sudo -n cp /usr/bin/qemu-armeb-static "$chrootDir"/usr/bin/
 	
-	sudo -n cp --update=none "$chrootDir"/etc/ld.so.preload "$chrootDir"/etc/ld.so.preload.orig
+	sudo -n cp --no-clobber "$chrootDir"/etc/ld.so.preload "$chrootDir"/etc/ld.so.preload.orig
 	echo | sudo -n tee "$chrootDir"/etc/ld.so.preload > /dev/null 2>&1
 	
 	
@@ -19916,6 +19614,99 @@ _dropChRoot() {
 
 
 
+_vmsize-micro() {
+	# Part files have been as large as 1905MiB .
+	echo 7620
+}
+_vmsize() {
+	# 25.95GiB
+	#echo 26572
+
+	# Preferred before addition of any AI models. Smaller than 32GB USB flash drive.
+	# 27.95GiB
+	#echo 28620
+
+	# Preferred with 'augment' ~8b q4_k_m LLM model.
+	# 37.95GiB
+	#echo 38860
+
+	# May accommodate a few additional AI models.
+	# 52.95GiB
+	#echo 54220
+
+	# Slightly smaller than expected 50GB BD-R DL .
+	# 46.1GiB
+	echo 47206
+}
+
+# Similar to _createVMimage , but intended to create an image solely for online installer steps , a small image ingredient to follow up with subsequent offline build from other more de-facto standard ingredients.
+# ATTENTION: Override if necessary.
+# CAUTION: Must follow defaults of '_createVMimage', which in turn must follow defaults (eg. _set_ubDistBuild , 'core.sh' , 'ops.sh' , ubiquitous_bash , etc) .
+# CAUTION: Platforms other than the default 'x64-efi' must use entirely different function paths, different 'vm-arch.img' filenames, etc.
+# ATTENTION: If alternative architectures (eg. ARM) were desired, creating a bootable 'micro'/'ingredients' image would be a more logical first step than porting the legacy build system that does not differentiate between this small bootable ingredient and the offline larger full build .
+_createVMimage-micro() {
+	if ! "$scriptAbsoluteLocation" _createVMimage-micro_sequence "$@"
+	then
+		_stop 1
+	fi
+	return 0
+}
+_createVMimage-micro_sequence() {
+    #export ubVirtImageOverride="vm-ingredient.img"
+    export ubVirtImageOverride_alternate="$scriptLocal"/"vm-ingredient.img"
+	local ub_vmImage_micro="true"
+	_createVMimage "$@"
+}
+_createVMimage-ingredient() {
+	_createVMimage-micro "$@"
+}
+_createVMimage-micro-expand() {
+	local currentExitStatus
+	currentExitStatus="0"
+	
+	_messageNormal '_custom-expand: dd'
+
+	local vmSize=$(_vmsize)
+	local vmSize_micro=$(_vmsize-micro)
+	local vmSize_boundary_expansion=$(bc <<< "$vmSize - $vmSize_micro - 1")
+
+	# ATTENTION: Expand ONLY the additional amount needed for custom additions . This is APPENDED .
+	! dd if=/dev/zero bs=1048576 count="$vmSize_boundary_expansion" >> "$scriptLocal"/vm.img && _messageFAIL
+
+	# Alternatively, it may be possible, but STRONGLY DISCOURAGED, to pad the file to a size. This, however, assumes the upstream 'ubdist/OS', etc, has not unexpectedly grown larger, which is still a VERY BAD assumption.
+	# https://unix.stackexchange.com/questions/196715/how-to-pad-a-file-to-a-desired-size
+	
+	
+	_messageNormal '_custom-expand: growpart'
+	! _openLoop && _messagePlain_bad 'fail: openLoop' && _messageFAIL
+	
+	export ubVirtPlatform="x64-efi"
+	#_determine_rawFileRootPartition
+	
+	export ubVirtImagePartition="p5"
+	
+	local current_imagedev=$(cat "$scriptLocal"/imagedev)
+	local current_rootpart=$(echo "$ubVirtImagePartition" | tr -dc '0-9')
+	
+	! _messagePlain_probe_cmd sudo -n growpart "$current_imagedev" "$current_rootpart" && _messageFAIL
+	
+	unset ubVirtPlatform
+	unset ubVirtImagePartition
+	
+	! _closeLoop && _messagePlain_bad 'fail: closeLoop' && _messageFAIL
+	
+	_messageNormal '_custom-expand: btrfs resize'
+	! _openChRoot && _messagePlain_bad 'fail: openChRoot' && _messageFAIL
+	
+	
+	! _messagePlain_probe_cmd _chroot btrfs filesystem resize max / && _messageFAIL
+	
+	
+	! _closeChRoot && _messagePlain_bad 'fail: closeChRoot' && _messageFAIL
+	
+	return 0
+}
+
 # Creates a raw VM image. Default Hybrid/UEFI partitioning and formatting.
 # ATTENTION: Override, if necessary.
 _createVMimage() {
@@ -19923,12 +19714,14 @@ _createVMimage() {
 	
 	mkdir -p "$scriptLocal"
 	
+	#[[ "$ub_vmImage_micro" == "true" ]] && export ubVirtImageOverride="$scriptLocal"/vm-ingredient.img
 	
 	export vmImageFile="$scriptLocal"/vm.img
+	[[ "$ub_vmImage_micro" == "true" ]] && export vmImageFile="$scriptLocal"/vm-ingredient.img
 	[[ "$ubVirtImageOverride" != "" ]] && export vmImageFile="$ubVirtImageOverride"
 	
 	[[ "$ubVirtImageOverride" == "" ]] && [[ -e "$vmImageFile" ]] && _messagePlain_good 'exists: '"$vmImageFile" && return 0
-	[[ "$ubVirtImageOverride" == "" ]] && [[ -e "$scriptLocal"/vm.img ]] && _messagePlain_good 'exists: '"$vmImageFile" && return 0
+	[[ "$ubVirtImageOverride" == "" ]] && [[ -e "$scriptLocal"/vm.img ]] && _messagePlain_good 'exists: '"$scriptLocal"/vm.img && return 0
 	
 	[[ -e "$lock_open" ]]  && _messagePlain_bad 'bad: locked!' && _messageFAIL && _stop 1
 	[[ -e "$scriptLocal"/l_o ]]  && _messagePlain_bad 'bad: locked!' && _messageFAIL && _stop 1
@@ -19942,6 +19735,7 @@ _createVMimage() {
 	_open
 	
 	export vmImageFile="$scriptLocal"/vm.img
+	[[ "$ub_vmImage_micro" == "true" ]] && export vmImageFile="$scriptLocal"/vm-ingredient.img
 	[[ "$ubVirtImageOverride" != "" ]] && export vmImageFile="$ubVirtImageOverride"
 	
 	
@@ -19950,33 +19744,17 @@ _createVMimage() {
 		[[ -e "$vmImageFile" ]] && _messagePlain_bad 'exists: '"$vmImageFile" && _messageFAIL && _stop 1
 	
 	
-		_messageNormal 'create: vm.img: file'
+		_messageNormal 'create: '"$vmImageFile"': file'
 	
-		# 25.95GiB
-		#export vmSize=26572
-	
-		# Preferred before addition of any AI models. Smaller than 32GB USB flash drive.
-		# 27.95GiB
-		#export vmSize=28620
-	
-		# Preferred with 'augment' ~8b q4_k_m LLM model.
-		# 37.95GiB
-		#export vmSize=38860
-	
-		# May accommodate a few additional AI models.
-		# 52.95GiB
-		#export vmSize=54220
-	
-		# Slightly smaller than expected 50GB BD-R DL .
-		# 46.1GiB
-		export vmSize=47206
 
+		export vmSize=$(_vmsize)
+		[[ "$ub_vmImage_micro" == "true" ]] && export vmSize=$(_vmsize-micro)
 
 		
 		export vmSize_boundary=$(bc <<< "$vmSize - 1")
-		_createRawImage
+		_createRawImage "$vmImageFile"
 	else
-		_messageNormal 'create: vm.img: device'
+		_messageNormal 'create: '"$vmImageFile"': device'
 
 		
 		export vmSize=$(bc <<< $(sudo -n lsblk -b --output SIZE -n -d "$vmImageFile")' / 1048576')
@@ -19985,7 +19763,7 @@ _createVMimage() {
 	fi
 	
 	
-	_messageNormal 'partition: vm.img'
+	_messageNormal 'partition: '"$vmImageFile"''
 	sudo -n parted --script "$vmImageFile" 'mklabel gpt'
 	
 	# Unusual.
@@ -20091,7 +19869,7 @@ _createVMimage() {
 	
 	
 	# Format partitions .
-	_messageNormal 'format: vm.img'
+	_messageNormal 'format: '"$vmImageFile"''
 	#"$scriptAbsoluteLocation" _loopImage_sequence || _stop 1
 	! "$scriptAbsoluteLocation" _openLoop && _messagePlain_bad 'fail: _openLoop' && _messageFAIL
 	
@@ -24448,9 +24226,6 @@ _request_visualPrompt() {
 
 
 
-
-
-
 _setup_researchEngine() {
 	if [[ -e "$scriptLib"/kit/app/researchEngine ]]
 	then
@@ -24495,6 +24270,27 @@ _setup_researchEngine() {
 	_messageFAIL
 	_stop 1
 }
+
+
+
+_upgrade_researchEngine() {
+	_setup_researchEngine _service_researchEngine-docker-chroot-start
+
+	_setup_researchEngine _upgrade_researchEngine_searxng "$@"
+	_setup_researchEngine _upgrade_researchEngine_openwebui "$@"
+
+	_setup_researchEngine _service_researchEngine-docker-chroot-stop
+}
+
+_upgrade_researchEngine-nvidia() {
+	_setup_researchEngine _service_researchEngine-docker-chroot-start
+	
+	_setup_researchEngine _upgrade_researchEngine_searxng "$@"
+	_setup_researchEngine _upgrade_researchEngine_openwebui-nvidia "$@"
+
+	_setup_researchEngine _service_researchEngine-docker-chroot-stop
+}
+
 
 
 
@@ -24626,8 +24422,10 @@ PARAMETER num_ctx 6144' > Llama-augment.Modelfile
 	
 	_service_ollama
 	
-	ollama create Llama-augment -f Llama-augment.Modelfile
+	! ollama create Llama-augment -f Llama-augment.Modelfile && _messagePlain_bad 'bad: FAIL: ollama create Llama-augment' && _messageFAIL
 	
+	! echo | sudo -n tee /AI-Llama-augment > /dev/null && _messagePlain_bad 'bad: FAIL: echo | sudo -n tee /AI-Llama-augment' && _messageFAIL
+
 	rm -f llama-3.1-8b-instruct-abliterated.Q4_K_M.gguf
 	rm -f Llama-augment.Modelfile
 	
@@ -24640,6 +24438,8 @@ PARAMETER num_ctx 6144' > Llama-augment.Modelfile
 _setup_ollama_sequence() {
 	local functionEntryPWD
 	functionEntryPWD="$PWD"
+
+	_mustGetSudo
 
 	_start
 	
@@ -24666,10 +24466,24 @@ _setup_ollama() {
 	#_wantGetDep sudo
 	#_mustGetSudo
 	#export currentUser_ollama=$(_user_ollama)
-	
+
+	[[ "$nonet" == "true" ]] && echo 'warn: nonet: skip: _setup_ollama' && return 0
+
+	if ( [[ $(id -u) != 0 ]] || _if_cygwin )
+	then
+		[[ "$1" != "--force" ]] && find "$HOME"/.ubcore/.retest-ollama -type f -mtime -2 2>/dev/null | grep '.retest-ollama' > /dev/null 2>&1 && return 0
+
+		rm -f "$HOME"/.ubcore/.retest-ollama > /dev/null 2>&1
+		touch "$HOME"/.ubcore/.retest-ollama
+		date +%s > "$HOME"/.ubcore/.retest-ollama
+	fi
+
+
 	if ! _if_cygwin
 	then
-		"$scriptAbsoluteLocation" _setup_ollama_sequence "$@"
+		_messagePlain_request 'ignore: upstream progress ->'
+		! "$scriptAbsoluteLocation" _setup_ollama_sequence && _messagePlain_bad 'bad: FAIL: _setup_ollama_sequence' && _messageFAIL
+		_messagePlain_request 'ignore: <- upstream progress'
 	fi
 	
 	type -p ollama > /dev/null 2>&1 && "$scriptAbsoluteLocation" _setup_ollama_model_augment_sequence
@@ -24679,7 +24493,7 @@ _test_ollama() {
 	#_mustGetSudo
 	#export currentUser_ollama=$(_user_ollama)
 
-	if ! type -p ollama > /dev/null 2>&1
+	if ! type -p ollama > /dev/null 2>&1 || ! [[ -e /AI-Llama-augment ]]
 	then
 		_setup_ollama
 	fi
@@ -24699,18 +24513,23 @@ _test_ollama() {
 _vector_ollama_procedure() {
 	local currentExitStatus
 	currentExitStatus=1
+
+	local currentPoints
+	currentPoints=0
 	
 	if ! _ollama_run_augment "Please output the word true . Any other output accompanying the word true is acceptable but not desirable. The purpose of this prompt is merely to validate that the LLM software is entirely functional, so the word true will be very helpful whereas any output other than the word true will be unhelpful . Please output the word true ." | grep -i true > /dev/null
 	then
 		echo 'fail: _vector_ollama' && _messagePlain_bad 'fail: _vector_ollama: prompt for word true did not output word true'
 	else
 		currentExitStatus=0
+		currentPoints=$((currentPoints+1))
 	fi
 	if _ollama_run_augment "Please output the word true . Any other output accompanying the word true is acceptable but not desirable. The purpose of this prompt is merely to validate that the LLM software is entirely functional, so the word true will be very helpful whereas any output other than the word true will be unhelpful . Please output the word true ." | grep -i false > /dev/null
 	then
 		echo 'fail: _vector_ollama' && _messagePlain_bad 'fail: _vector_ollama: prompt for word true instead included word false'
 	else
 		currentExitStatus=0
+		currentPoints=$((currentPoints+1))
 	fi
 	
 	if ! _ollama_run_augment "Please output the word false . Any other output accompanying the word false is acceptable but not desirable. The purpose of this prompt is merely to validate that the LLM software is entirely functional, so the word false will be very helpful whereas any output other than the word false will be unhelpful . Please output the word false ." | grep -i false > /dev/null
@@ -24718,17 +24537,23 @@ _vector_ollama_procedure() {
 		echo 'fail: _vector_ollama' && _messagePlain_bad 'fail: _vector_ollama: prompt for word false did not output word false'
 	else
 		currentExitStatus=0
+		currentPoints=$((currentPoints+1))
 	fi
 	if _ollama_run_augment "Please output the word false . Any other output accompanying the word false is acceptable but not desirable. The purpose of this prompt is merely to validate that the LLM software is entirely functional, so the word false will be very helpful whereas any output other than the word false will be unhelpful . Please output the word false ." | grep -i true > /dev/null
 	then
 		echo 'fail: _vector_ollama' && _messagePlain_bad 'fail: _vector_ollama: prompt for word false instead included word true'
 	else
 		currentExitStatus=0
+		currentPoints=$((currentPoints+1))
 	fi
 
 
 	# If NONE of the vector tests have succeeded, then FAIL . Normally, with an 'augment' LLM model, this should be so rare as to vastly more often indicate broken ollama installation, very broken/corrupted LLM model, very broken LLM configuration, insufficient disk space for model, etc.
 	[[ "$currentExitStatus" != "0" ]] && _messageFAIL && _stop 1
+
+	# At least two of the vector tests can apparently pass with a broken (or missing) AI model, and very basic vector tests with an 'augment' AI model are normally extremely reliable.
+	[[ "$currentPoints" -lt 3 ]] && _messageFAIL && _stop 1
+	#[[ "$currentPoints" -lt 4 ]] && _messageFAIL && _stop 1
 
 	return 0
 }
@@ -24818,6 +24643,8 @@ _service_ollama() {
 		echo 'fail: _service_ollama: ollama: 127.0.0.1:11434'
 		return 1
 	fi
+
+	return 0
 }
 
 
@@ -27216,6 +27043,94 @@ _github_removeActionsHTTPS() {
 
 
 
+
+
+
+# "$1" == build-${{ github.run_id }}-${{ github.run_attempt }}
+#shift
+# "$@" == ./_local/package_image_beforeBoot.tar.flx.part*
+_gh_release_upload_parts-multiple() {
+    "$scriptAbsoluteLocation" _gh_release_upload_parts-multiple_sequence "$@"
+}
+_gh_release_upload_parts-multiple_sequence() {
+    _messageNormal '_gh_release_upload_parts: '"$@"
+    local currentTag="$1"
+    shift
+
+    local currentStream_max=12
+
+    local currentStreamNum=0
+
+    for currentFile in "$@"
+    do
+        let currentStreamNum++
+
+        "$scriptAbsoluteLocation" _gh_release_upload_part-single_sequence "$currentTag" "$currentFile" &
+        eval local currentStream_${currentStreamNum}_PID="$!"
+        _messagePlain_probe_var currentStream_${currentStreamNum}_PID
+        
+        while [[ $(jobs | wc -l) -ge "$currentStream_max" ]]
+        do
+            echo
+            jobs
+            echo
+            sleep 2
+            true
+        done
+    done
+
+    local currentStreamPause
+    for currentStreamPause in $(seq "1" "$currentStreamNum")
+	do
+        _messagePlain_probe currentStream_${currentStreamPause}_PID= $(eval "echo \$currentStream_${currentStreamPause}_PID")
+		if eval "[[ \$currentStream_${currentStreamPause}_PID != '' ]]"
+        then
+           _messagePlain_probe _pauseForProcess $(eval "echo \$currentStream_${currentStreamPause}_PID")
+           _pauseForProcess $(eval "echo \$currentStream_${currentStreamPause}_PID")
+        fi
+	done
+
+    while [[ $(jobs | wc -l) -ge 1 ]]
+    do
+        echo
+        jobs
+        echo
+        sleep 2
+        true
+    done
+    
+    wait
+}
+_gh_release_upload_part-single_sequence() {
+    _messagePlain_nominal '_gh_release_upload: '"$1"' '"$2"
+    local currentTag="$1"
+    local currentFile="$2"
+
+    #local currentPID
+    #"$scriptAbsoluteLocation" _stopwatch gh release upload "$currentTag" "$currentFile" &
+    #currentPID="$!"
+
+    #_pauseForProcess "$currentPID"
+    #wait
+
+    #while ! "$scriptAbsoluteLocation" _stopwatch _timeout 10 dd if="$currentFile" bs=1M status=progress > /dev/null
+    #do
+        #sleep 7
+    #done
+    #return 0
+
+    # Maximum file size is 2GigaBytes .
+    local currentIteration=0
+    while ! "$scriptAbsoluteLocation" _stopwatch _timeout 600 gh release upload --clobber "$currentTag" "$currentFile" && [[ "$currentIteration" -lt 30 ]]
+    do
+        sleep 7
+        let currentIteration++
+    done
+    return 0
+}
+
+
+
 _testGit() {
 	_wantGetDep git
 }
@@ -28960,8 +28875,10 @@ _wget_githubRelease_join() {
 
 
 
-
 _wget_githubRelease_join-stdout() {
+	"$scriptAbsoluteLocation" _wget_githubRelease_join_sequence-stdout "$@"
+}
+_wget_githubRelease_join_sequence-stdout() {
 	( _messagePlain_nominal '\/\/\/\/\/ \/\/\/\/\/ init: _wget_githubRelease_join-stdout' >&2 ) > /dev/null
 	( _messagePlain_probe_safe _wget_githubRelease_join-stdout "$@" >&2 ) > /dev/null
 
@@ -29128,19 +29045,23 @@ _wget_githubRelease_join-stdout() {
 	done
 
 	export currentSkipPart="$currentPart"
+	[[ "$currentStream_max" -gt "$currentSkipPart" ]] && currentStream_max=$(( "$currentSkipPart" + 1 ))
 
 	"$scriptAbsoluteLocation" _wget_githubRelease_join_sequence-parallel "$currentAbsoluteRepo" "$currentReleaseLabel" "$currentFile" &
 
 
 	# Prebuffer .
 	( _messagePlain_nominal '\/\/\/\/\/ \/\/\/\/  preBUFFER: WAIT  ...  currentPart='"$currentPart" >&2 ) > /dev/null
-	#( _messagePlain_probe 'prebuffer: currentPart= '"$currentPart" >&2 ) > /dev/null
-	if [[ "$currentPart" -ge "2" ]] && [[ "$currentStream_max" -ge "2" ]]
+	if [[ "$currentPart" -ge "01" ]] && [[ "$currentStream_max" -ge "2" ]]
 	then
-		currentStream="2"
-		while ( ! [[ -e "$scriptAbsoluteFolder"/$(_axelTmp).PASS ]] && ! [[ -e "$scriptAbsoluteFolder"/$(_axelTmp).FAIL ]] )
+		#currentStream="2"
+		for currentStream in $(seq "$currentStream_min" "$currentStream_max" | sort -r)
 		do
-			sleep 3
+			( _messagePlain_probe 'prebuffer: currentStream= '"$currentStream" >&2 ) > /dev/null
+			while ( ! [[ -e "$scriptAbsoluteFolder"/$(_axelTmp).PASS ]] && ! [[ -e "$scriptAbsoluteFolder"/$(_axelTmp).FAIL ]] )
+			do
+				sleep 3
+			done
 		done
 	fi
 	currentStream="$currentStream_min"
@@ -29218,6 +29139,7 @@ _wget_githubRelease_join_sequence-parallel() {
 	local currentStream_min=1
 	local currentStream_max=3
 	[[ "$FORCE_PARALLEL" != "" ]] && currentStream_max="$FORCE_PARALLEL"
+	[[ "$currentStream_max" -gt "$currentSkipPart" ]] && currentStream_max=$(( "$currentSkipPart" + 1 ))
 	
 	currentStream="$currentStream_min"
 	for currentPart in $(seq -f "%02g" 0 "$currentSkipPart" | sort -r)
@@ -31775,10 +31697,45 @@ _test_croc_upstream() {
 	! _wantSudo && return 1
 	
 	echo
-	curl https://getcroc.schollz.com | bash
+	#curl https://getcroc.schollz.com | bash
+	curl -fsSL 'https://getcroc.schollz.com' | bash
 	echo
 }
+_test_croc_upstream_static-sequence() {
+	_start
 
+	_mustGetSudo
+
+	cd "$safeTmp"
+
+	type croc > /dev/null 2>&1 && return 0
+	
+	# TODO: MAINTENANCE .
+	curl -L 'https://github.com/schollz/croc/releases/download/v10.2.1/croc_v10.2.1_Linux-64bit.tar.gz' -o croc_v10.2.1_Linux-64bit.tar.gz
+
+	tar xf croc_v10.2.1_Linux-64bit.tar.gz
+
+	sudo -n mkdir -p /usr/local/bin
+	sudo -n mv -f croc /usr/local/bin/croc
+	sudo -n chmod 755 /usr/local/bin/croc
+
+	sudo -n mkdir -p /usr/local/share/doc/croc
+	sudo -n mv -f LICENSE /usr/local/share/doc/croc/LICENSE
+
+	_stop
+}
+_test_croc_upstream_verbose() {
+	_messagePlain_request 'ignore: upstream progress ->'
+	
+	curl -fsSL 'https://getcroc.schollz.com' | head -n 30
+
+	_test_croc_upstream "$@"
+	#_test_croc_upstream_beta "$@"
+
+	! _typeDep croc && _test_croc_upstream_static-sequence
+	
+	_messagePlain_request 'ignore: <- upstream progress'
+}
 
 # https://github.com/schollz/croc
 _test_croc() {
@@ -31789,15 +31746,10 @@ _test_croc() {
 	
 	if [[ "$nonet" != "true" ]] && ! _if_cygwin
 	then
-		_messagePlain_request 'ignore: upstream progress ->'
-		
-		_test_croc_upstream "$@"
-		#_test_croc_upstream_beta "$@"
-		
-		_messagePlain_request 'ignore: <- upstream progress'
+		_test_croc_upstream_verbose
 	fi
 	
-	_wantSudo && _wantGetDep croc
+	#_wantSudo && _wantGetDep croc
 	
 	! _typeDep croc && echo 'warn: missing: croc'
 	
@@ -35585,6 +35537,19 @@ _kernelConfig_require-convenience() {
 	true
 }
 
+_kernelConfig_require-embedded() {
+	_messagePlain_nominal 'kernelConfig: embedded'
+	export kernelConfig_file="$1"
+
+	# Inspired by discussion with Chris Lombardi .
+	#  https://github.com/clearchris
+	# https://github.com/torvalds/linux/commit/24bc41b4558347672a3db61009c339b1f5692169
+	_kernelConfig_warn-y_m CAN_GS_USB
+	_kernelConfig_warn-y__ CAN_RX_OFFLOAD
+
+	true
+}
+
 _kernelConfig_require-special() {
 	_messagePlain_nominal 'kernelConfig: special'
 	export kernelConfig_file="$1"
@@ -35653,6 +35618,7 @@ _kernelConfig_require-special() {
 	_kernelConfig__bad-n__ MMC_MVSDIO # Disabled by default apparently.
 	#
 	#_kernelConfig__bad-n__ MT7663_USB_SDIO_COMMON
+	#_kernelConfig__bad-n__ MT7663U
 	#
 	_kernelConfig__bad-n__ MT76_SDIO
 	_kernelConfig__bad-n__ MWIFIEX_SDIO
@@ -35669,6 +35635,8 @@ _kernelConfig_require-special() {
 	_kernelConfig__bad-n__ WILC1000_SDIO
 	_kernelConfig__bad-n__ WL1251_SDIO
 	_kernelConfig__bad-n__ WLCORE_SDIO
+	#
+	_kernelConfig__bad-n__ MMC_USHC
 	
 	_kernelConfig__bad-n__ RTW88_8822BS
 	_kernelConfig__bad-n__ RTW88_8822CS
@@ -35778,6 +35746,8 @@ _kernelConfig_panel() {
 	_kernelConfig_require-investigation "$@"
 	
 	_kernelConfig_require-convenience "$@"
+
+	_kernelConfig_require-embedded "$@"
 	
 	_kernelConfig_require-special "$@"
 	
@@ -35818,6 +35788,8 @@ _kernelConfig_mobile() {
 	_kernelConfig_require-investigation "$@"
 	
 	_kernelConfig_require-convenience "$@"
+
+	_kernelConfig_require-embedded "$@"
 	
 	_kernelConfig_require-special "$@"
 	
@@ -35859,6 +35831,8 @@ _kernelConfig_desktop() {
 	_kernelConfig_require-investigation "$@"
 	
 	_kernelConfig_require-convenience "$@"
+
+	_kernelConfig_require-embedded "$@"
 	
 	_kernelConfig_require-special "$@"
 	
@@ -46516,7 +46490,9 @@ _variableLocalTest_sequence() {
 	unset doubleLocalDefinitionA
 	[[ "$doubleLocalDefinitionA" != "" ]] && _messageFAIL && _stop 1
 	
-	
+
+	variableLocalTest_evalTest() { local currentVariableNum=1 ; eval local currentVariable_${currentVariableNum}_currentData=PASS ; ( eval "[[ \$currentVariable_${currentVariableNum}_currentData == PASS ]]" && eval "[[ \$currentVariable_${currentVariableNum}_currentData != '' ]]" && eval "echo \$currentVariable_${currentVariableNum}_currentData" ) ;} ; variableLocalTest_evalTest > /dev/null ; [[ $(variableLocalTest_evalTest) != "PASS" ]] && _messageFAIL && _stop 1
+
 	_stop
 }
 
@@ -47531,6 +47507,16 @@ _test() {
 			echo -e '\E[0;36m Timing: _test_timeoutRead \E[0m'
 			! _test_timeoutRead && echo '_test_timeoutRead broken' && _stop 1
 		fi
+
+		echo -e '\E[0;36m Timing: true/false \E[0m'
+		! _timeout 10 true && echo '! _timeout 10 true  broken' && _stop 1
+		_timeout 10 false && echo '_timeout 10 false  broken' && _stop 1
+		if type _stopwatch > /dev/null 2>&1
+		then
+    		! _stopwatch _timeout 10 true > /dev/null 2>&1 && echo '! _stopwatch _timeout 10 true  broken' && _stop 1
+    		_stopwatch _timeout 10 false > /dev/null 2>&1 && echo '_stopwatch _timeout 10 false  broken' && _stop 1
+		fi
+		
 		
 		echo -e '\E[0;36m Timing: _timetest \E[0m'
 		! _timetest && echo '_timetest broken' && _stop 1
@@ -48700,31 +48686,44 @@ _create_ubDistBuild-create() {
 	
 	
 	
-	_createVMimage "$@"
+	if [[ ! -e "$scriptLocal"/vm-ingredient.img ]]
+	then
+
+		_createVMimage "$@"
+		
+		
+		
+		_messageNormal 'os: globalVirtFS: debootstrap'
+		
+		! "$scriptAbsoluteLocation" _openImage && _messagePlain_bad 'fail: _openImage' && _messageFAIL
+		local imagedev
+		imagedev=$(cat "$scriptLocal"/imagedev)
+		
+		
+		# https://gist.github.com/superboum/1c7adcd967d3e15dfbd30d04b9ae6144
+		# https://gist.github.com/dyejon/8e78b97c4eba954ddbda7ae482821879
+		#http://deb.debian.org/debian/
+		#--components=main --include=inetutils-ping,iproute
+		#! sudo -n debootstrap --variant=minbase --arch amd64 bullseye "$globalVirtFS" && _messageFAIL
+		! sudo -n debootstrap --variant=minbase --arch amd64 bookworm "$globalVirtFS" && _messageFAIL
+		
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	_messageNormal 'os: globalVirtFS: debootstrap'
-	
+		! "$scriptAbsoluteLocation" _closeImage && _messagePlain_bad 'fail: _closeImage' && _messageFAIL
+	else
+		mv -f "$scriptLocal"/vm-ingredient.img "$scriptLocal"/vm.img
+		[[ -e "$scriptLocal"/vm-ingredient.img ]] && _messagePlain_bad 'bad: fail: mv: vm-ingredient.img' && _messageFAIL
+		[[ ! -e "$scriptLocal"/vm.img ]] && _messagePlain_bad 'bad: fail: mv: vm-ingredient.img' && _messageFAIL
+
+		unset ubVirtImageOverride
+		_createVMimage-micro-expand
+	fi
+
+
+
 	! "$scriptAbsoluteLocation" _openImage && _messagePlain_bad 'fail: _openImage' && _messageFAIL
 	local imagedev
 	imagedev=$(cat "$scriptLocal"/imagedev)
-	
-	
-	# https://gist.github.com/superboum/1c7adcd967d3e15dfbd30d04b9ae6144
-	# https://gist.github.com/dyejon/8e78b97c4eba954ddbda7ae482821879
-	#http://deb.debian.org/debian/
-	#--components=main --include=inetutils-ping,iproute
-	#! sudo -n debootstrap --variant=minbase --arch amd64 bullseye "$globalVirtFS" && _messageFAIL
-	! sudo -n debootstrap --variant=minbase --arch amd64 bookworm "$globalVirtFS" && _messageFAIL
-	
-	
+
 	
 	_createVMfstab
 	
@@ -48941,9 +48940,6 @@ CZXWXcRMTo8EmM8i4d
 	echo 'deb http://deb.debian.org/debian bookworm-backports main contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_backports.list > /dev/null
 
 
-	echo 'deb [signed-by=/etc/apt/keyrings/apt-fast.gpg] http://ppa.launchpad.net/apt-fast/stable/ubuntu jammy main' | _getMost_backend tee /etc/apt/sources.list.d/apt-fast.list > /dev/null
-
-
 	_getMost_backend apt-get update
 	
 	
@@ -48954,9 +48950,14 @@ CZXWXcRMTo8EmM8i4d
 
 
 	_getMost_backend_aptGetInstall aria2 curl gpg
+	_getMost_backend_aptGetInstall gnupg
+	_getMost_backend_aptGetInstall lsb-release
 	
+	echo 'deb [signed-by=/etc/apt/keyrings/apt-fast.gpg] http://ppa.launchpad.net/apt-fast/stable/ubuntu jammy main' | _getMost_backend tee /etc/apt/sources.list.d/apt-fast.list > /dev/null
 	_getMost_backend mkdir -p /etc/apt/keyrings
 	_getMost_backend curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B' | _getMost_backend gpg --dearmor -o /etc/apt/keyrings/apt-fast.gpg
+	# ATTRIBUTION-AI: ChatGPT o3-mini-high 2025-02-13
+	_getMost_backend apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 1E2824A7F22B44BD 1EE2FF37CA8DA16B
 	_getMost_backend apt-get update
 	_getMost_backend_aptGetInstall apt-fast
 
@@ -49116,6 +49117,23 @@ CZXWXcRMTo8EmM8i4d
 		#_chroot rsync -ax /linux-firmware/. /lib/firmware
 	#fi
 	
+
+	_messagePlain_nominal 'special (ie. packages missed by Debian Stable distribution, etc)'
+
+	sudo -n cp "$scriptLib"/"setup/debian/curlftpfs_0.9.2-9+b1_amd64.deb" "$globalVirtFS"/
+	if _chroot ls -A -1 "/curlftpfs_0.9.2-9+b1_amd64.deb" > /dev/null
+	then
+		_chroot dpkg -i "/curlftpfs_0.9.2-9+b1_amd64.deb"
+	else
+		# WARNING: HTTP (as opposed to HTTPS) strongly discouraged.
+		#_chroot wget 'http://ftp.debian.org/debian/pool/main/c/curlftpfs/curlftpfs_0.9.2-9+b1_amd64.deb'
+		_chroot wget 'https://mirrorservice.org/sites/ftp.debian.org/debian/pool/main/c/curlftpfs/curlftpfs_0.9.2-9+b1_amd64.deb'
+		
+		_chroot dpkg -i "./curlftpfs_0.9.2-9+b1_amd64.deb"
+	fi
+
+	_getMost_backend_aptGetInstall curlftpfs
+
 	
 	
 	_messagePlain_nominal 'tzdata, locales'
@@ -49313,7 +49331,7 @@ _create_ubDistBuild-rotten_install() {
 	
 	
 	_chroot apt-get -y clean
-	_chroot sudo -n apt-get autoremove --purge
+	_chroot sudo -n apt-get autoremove -y --purge
 
 	# https://forum.manjaro.org/t/high-cpu-usage-from-plasmashell-kactivitymanagerd/114305
 	# Apparently prevents excessive CPU usage from plasmashell , etc .
@@ -50208,13 +50226,16 @@ _create_ubDistBuild-bootOnce-qemu_sequence() {
 	#disown -a -r
 	
 	# Up to 700s per kernel (ie. modules), plus 500s, total of 1147s for one kernel, 1749s to wait for three kernels.
-	_messagePlain_nominal 'wait: 6200s'
+	#6200s ... had a track record of a few years
+	# Prefer 6200s, as this is normally sufficient for both the apparent ~1900s without compiling vbox kernel modules, and longer times if compiling under qemu virtualizaton.
+	# The longer 13500s wait is mostly only beneficial ONLY to make the exit status a clearly unambigious statement that FAIL actually happened, not merely timeout before compiling could complete.
+	_messagePlain_nominal 'wait: 13500s'
 	local currentIterationWait
 	currentIterationWait=0
 	pgrep qemu-system
 	pgrep qemu
 	ps -p "$currentPID"
-	while [[ "$currentIterationWait" -lt 6200 ]] && ( pgrep qemu-system > /dev/null 2>&1 || pgrep qemu > /dev/null 2>&1 || ps -p "$currentPID" > /dev/null 2>&1 )
+	while [[ "$currentIterationWait" -lt 13500 ]] && ( pgrep qemu-system > /dev/null 2>&1 || pgrep qemu > /dev/null 2>&1 || ps -p "$currentPID" > /dev/null 2>&1 )
 	do
 		if ( [[ "$qemuXvfb" == "true" ]] && ( [[ "$currentIterationWait" -le 320 ]] && [[ $(bc <<< "$currentIterationWait % 5") == 0 ]] ) || [[ $(bc <<< "$currentIterationWait % 30") == 0 ]] )
 		then
@@ -50230,7 +50251,7 @@ _create_ubDistBuild-bootOnce-qemu_sequence() {
 		let currentIterationWait=currentIterationWait+1
 	done
 	_messagePlain_probe_var currentIterationWait
-	[[ "$currentIterationWait" -ge 6200 ]] && _messagePlain_bad 'bad: fail: bootdisc: poweroff' && currentExitStatus=1
+	[[ "$currentIterationWait" -ge 13500 ]] && _messagePlain_bad 'bad: fail: bootdisc: poweroff' && currentExitStatus=1
 	sleep 27
 	
 	
@@ -50771,13 +50792,14 @@ _ubDistBuild_split-tail_procedure() {
 	do
 		[[ -s ./"$1" ]] && [[ -e ./"$1" ]] && tail -c 1997537280 "$1" > "$1".part"$currentIteration" && truncate -s -1997537280 "$1"
 	done
+	return 0
 }
 
 # Expected fastest.
 # ATTRIBUTION-AI: ChatGPT o1 2025-01-14 
 _ubDistBuild_split-reflink_procedure() {
     local inputFile=""$1""
-    local chunkSize=1997537280  # ~1.86 GB
+    local chunkSize=1997537280  # ~1.86 GiB
     local currentIteration=0
 
     # Sanity check
@@ -50810,6 +50832,7 @@ _ubDistBuild_split-reflink_procedure() {
 
         ((currentIteration++))
     done
+	return 0
 }
 
 # Expected to avoid repeatedly reading most of file through 'tail', however, not as fast as near-instant sector mapping.
@@ -51262,7 +51285,9 @@ _zSpecial_qemu_sequence_prog() {
 	
 	# sudo -n systemctl status vboxdrv
 	echo '#!/usr/bin/env bash' >> "$hostToGuestFiles"/cmd.sh
+	echo 'date +"%Y-%m-%d" | sudo -n tee /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo 'sudo -n update-grub' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: update-grub" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo '_detect_process_compile() {
 	pgrep cc1 && return 0
 	pgrep apt && return 0
@@ -51276,20 +51301,29 @@ _zSpecial_qemu_sequence_prog() {
 	# If uncommented, any indefinite delay in '_detect_process_compile' may cause failure.
 	#echo 'while _detect_process_compile && sleep 27 && _detect_process_compile && sleep 27 && _detect_process_compile ; do sleep 27 ; done' >> "$hostToGuestFiles"/cmd.sh
 	
+	echo 'echo done: "_detect_process_compile (if uncommented)" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo 'sleep 15' >> "$hostToGuestFiles"/cmd.sh
 	echo '! sudo -n lsmod | grep -i vboxdrv && sudo -n /sbin/vboxconfig' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: vboxconfig" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo 'sleep 75' >> "$hostToGuestFiles"/cmd.sh
 	echo 'sudo -n lsmod | cut -f1 -d\  | sudo -n tee /lsmodReport' >> "$hostToGuestFiles"/cmd.sh
+	echo 'cat /lsmodReport | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: lsmodReport" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo '[[ ! -e /kded5-done ]] && kded5 --check' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: kded5 --check (1 of 2)" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo '[[ ! -e /kded5-done ]] && sleep 90' >> "$hostToGuestFiles"/cmd.sh
 
 	echo '[[ ! -e /FW-done ]] && cd /home/user/.ubcore/ubiquitous_bash ; ./ubiquitous_bash.sh _cfgFW-desktop | sudo -n tee /cfgFW.log ; cd' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: cfgFW-desktop (1 of 2)" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo '[[ ! -e /FW-done ]] && cd /home/user/.ubcore/ubiquitous_bash ; ./ubiquitous_bash.sh _cfgFW-desktop | sudo -n tee /cfgFW.log ; cd' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: cfgFW-desktop (2 of 2)" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 
 	echo '[[ ! -e /kded5-done ]] && kded5 --check' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: kded5 --check (2 of 2)" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo '( [[ ! -e /kded5-done ]] || [[ ! -e /FW-done ]] ) && sleep 420' >> "$hostToGuestFiles"/cmd.sh
 	echo 'echo | sudo -n tee /kded5-done' >> "$hostToGuestFiles"/cmd.sh
 	echo 'echo | sudo -n tee /FW-done' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: sleep , /kded5-done , /FW-done" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo 'sudo -n poweroff' >> "$hostToGuestFiles"/cmd.sh
 }
 
@@ -51468,8 +51502,10 @@ _zSpecial_qemu() {
 
 
 
-_chroot_test() {
+_chroot_test_sequence() {
 	_messageNormal '##### init: _chroot_test'
+	_start
+
 	echo
 	
 	local functionEntryPWD="$PWD"
@@ -51517,7 +51553,8 @@ _chroot_test() {
 	                  print diff;
 	                  print old_mode;
 	                  print new_mode;
-	                }' | sed -e 's/^old/NEW/;s/^new/old/;s/^NEW/new/' | tee /dev/sdtout | git apply
+	                }' | sed -e 's/^old/NEW/;s/^new/old/;s/^NEW/new/' | tee /dev/stdout > "$safeTmp"/patch.txt
+	cat "$safeTmp"/patch.txt | git apply
 
 	sleep 9
 	git config core.fileMode "$currentConfig"
@@ -51547,6 +51584,14 @@ _chroot_test() {
 	! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
 
 	cd "$functionEntryPWD"
+	_stop
+	#return 0
+}
+_chroot_test() {
+	if ! "$scriptAbsoluteLocation" _chroot_test_sequence "$@"
+	then
+		_stop 1
+	fi
 	return 0
 }
 
@@ -52310,7 +52355,8 @@ _getRelease-ubcp() {
     then
         #-H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"
         #curl -L -o "$currentAccessoriesDir"/integrations/ubcp/"$1"  $(curl -s "https://api.github.com/repos/mirage335/ubiquitous_bash/releases" | jq -r ".[] | select(.name == \"internal\") | .assets[] | select(.name == \"""$1""\") | .browser_download_url" | sort -n -r | head -n1)
-        curl -L -o "$currentAccessoriesDir"/integrations/ubcp/"$1"  $(curl -s "https://api.github.com/repos/mirage335-colossus/ubiquitous_bash/releases" | jq -r ".[] | select(.name == \"internal\") | .assets[] | select(.name == \"""$1""\") | .browser_download_url" | sort -n -r | head -n1)
+        #curl -L -o "$currentAccessoriesDir"/integrations/ubcp/"$1"  $(curl -s "https://api.github.com/repos/mirage335-colossus/ubiquitous_bash/releases" | jq -r ".[] | select(.name == \"internal\") | .assets[] | select(.name == \"""$1""\") | .browser_download_url" | sort -n -r | head -n1)
+        _wget_githubRelease "mirage335-colossus/ubiquitous_bash" "internal" "$1" -O "$currentAccessoriesDir"/integrations/ubcp/"$1"
     fi
 }
 
@@ -55567,6 +55613,801 @@ _upgrade_kernel() {
 
 
 
+
+# Intended to create an image solely for online installer steps , a small image ingredient to follow up with subsequent offline build from other more de-facto standard ingredients.
+
+# WARNING: May be untested.
+_package_ingredientVM() {
+    _messageNormal '##### init: _package_ingredientVM'
+
+
+	rm -f "$scriptLocal"/vm-ingredient.img.flx > /dev/null 2>&1
+
+    # Maybe ~15MB/2GB smaller.
+    #! cat "$scriptLocal"/vm-ingredient.img | tee >(openssl dgst -sha3-512 -binary | xxd -p -c 256 > "$scriptLocal"/vm-ingredient.img.hash.txt) | xz -9e -T1 -z - > "$scriptLocal"/vm-ingredient.img.flx && _messagePlain_bad 'bad: FAIL: xz' && _messageFAIL
+
+    ! cat "$scriptLocal"/vm-ingredient.img | tee >(openssl dgst -sha3-512 -binary | xxd -p -c 256 > "$scriptLocal"/vm-ingredient.img.hash.txt) | xz -9e -T6 -z - > "$scriptLocal"/vm-ingredient.img.flx && _messagePlain_bad 'bad: FAIL: xz' && _messageFAIL
+
+	#--fast=65537
+	#cat "$scriptLocal"/vm-ingredient.img | lz4 -z --fast=1 - "$scriptLocal"/vm-ingredient.img.flx
+
+    echo
+    cat "$scriptLocal"/vm-ingredient.img.hash.txt
+	
+	! [[ -e "$scriptLocal"/vm-ingredient.img.flx ]] && _messagePlain_bad 'bad: FAIL: missing: vm-ingredient.img.flx' && _messageFAIL
+	
+	return 0
+}
+_split_ingredientVM() {
+    _messageNormal '##### init: _split_ingredientVM'
+	local functionEntryPWD
+	functionEntryPWD="$PWD"
+
+	cd "$scriptLocal"
+
+    ! _ubDistBuild_split_procedure ./vm-ingredient.img.flx && _messagePlain_bad 'bad: FAIL: split' && _messageFAIL
+
+    rm -f ./vm-ingredient.img.flx > /dev/null 2>&1
+
+    cd "$functionEntryPWD"
+    return 0
+}
+_get_ingredientVM() {
+    _messageNormal '##### init: _get_ingredientVM'
+    rm -f "$scriptLocal"/vm-ingredient.img > /dev/null 2>&1
+    rm -f "$scriptLocal"/vm-ingredient.img.hash-download.txt > /dev/null 2>&1
+    rm -f "$scriptLocal"/vm-ingredient.img.hash-upstream.txt > /dev/null 2>&1
+    
+    local releaseLabel="$1"
+    #[[ "$releaseLabel" == "" ]] && releaseLabel=latest
+    [[ "$releaseLabel" == "" ]] && releaseLabel=internal
+    #-whirlpool
+    if ! _wget_githubRelease_join-stdout "soaringDistributions/ubDistBuild" "$releaseLabel" "vm-ingredient.img.flx" | xz -d | tee >(openssl dgst -sha3-512 -binary | xxd -p -c 256 > "$scriptLocal"/vm-ingredient.img.hash-download.txt) > "$scriptLocal"/vm-ingredient.img
+    then
+        _messagePlain_bad 'bad: FAIL: get'
+        _messageFAIL
+    fi
+
+    # Hash
+    echo
+    cat "$scriptLocal"/vm-ingredient.img.hash-download.txt
+
+    _wget_githubRelease-stdout "soaringDistributions/ubDistBuild" "$releaseLabel" "vm-ingredient.img.hash.txt" > "$scriptLocal"/vm-ingredient.img.hash-upstream.txt
+    #$(_wget_githubRelease-stdout "soaringDistributions/ubDistBuild" "$releaseLabel" "vm-ingredient.img.hash.txt" | tr -dc 'a-f0-9')
+    if [[ $(cat "$scriptLocal"/vm-ingredient.img.hash-upstream.txt | tr -dc 'a-f0-9') == $(cat "$scriptLocal"/vm-ingredient.img.hash-download.txt | tr -dc 'a-f0-9') ]]
+    then
+        _messagePlain_good 'good: hash'
+        return 0
+    fi
+    
+    _messagePlain_bad 'bad: FAIL: hash'
+    _messageFAIL
+}
+_join_ingredientVM() {
+    _messageNormal '##### init: _join_ingredientVM'
+
+    ! [[ -e "$scriptLocal"/"vm-ingredient.img.flx.part00" ]] && _messagePlain_bad 'bad: FAIL: missing: vm-ingredient.img.flx.part00' && _messageFAIL
+
+    rm -f "$scriptLocal"/vm-ingredient.img.hash-join.txt > /dev/null 2>&1
+
+    rm -f "$scriptLocal"/vm-ingredient.img > /dev/null 2>&1
+    ( local currentIteration=""
+    for currentIteration in $(seq -w 0 50 | sort -r)
+    do
+        #_messagePlain_probe_var currentIteration
+        [[ -e "$scriptLocal"/vm-ingredient.img.flx.part"$currentIteration" ]] && dd if="$scriptLocal"/vm-ingredient.img.flx.part"$currentIteration" bs=1M status=progress
+    done ) | xz -d > "$scriptLocal"/vm-ingredient.img
+
+    cat "$scriptLocal"/vm-ingredient.img | openssl dgst -sha3-512 -binary | xxd -p -c 256 > "$scriptLocal"/vm-ingredient.img.hash-join.txt
+
+    echo
+    cat "$scriptLocal"/vm-ingredient.img.hash-join.txt
+
+    # If hash-upstream.txt or hash.txt are available, assume these may have been downloaded along with the now joined vm-ingredient.img file, compare, and if match, report good.
+    if [[ $(cat "$scriptLocal"/vm-ingredient.img.hash-upstream.txt 2> /dev/null | tr -dc 'a-f0-9') == $(cat "$scriptLocal"/vm-ingredient.img.hash-join.txt | tr -dc 'a-f0-9') ]]
+    then
+        _messagePlain_good 'good: hash'
+        return 0
+    fi
+
+    return 0
+}
+
+
+_create_ingredientVM() {
+    type _if_cygwin > /dev/null 2>&1 && _if_cygwin && _messagePlain_warn 'warn: _if_cygwin' && _stop 1
+
+    _create_ingredientVM_image "$@"
+
+    if ! "$scriptAbsoluteLocation" _create_ingredientVM_ubiquitous_bash-cp "$@"
+    then
+        _stop 1
+    fi
+
+    _create_ingredientVM_online "$@"
+    
+    if ! "$scriptAbsoluteLocation" _create_ingredientVM_ubiquitous_bash-rm "$@"
+    then
+        _stop 1
+    fi
+
+    _create_ingredientVM_zeroFill "$@"
+}
+
+_create_ingredientVM_image() {
+    type _if_cygwin > /dev/null 2>&1 && _if_cygwin && _messagePlain_warn 'warn: _if_cygwin' && _stop 1
+    _messageNormal '##### init: _create_ingredientVM_image'
+
+	mkdir -p "$scriptLocal"
+	
+
+    [[ -e "$scriptLocal"/"vm-ingredient.img" ]] && _messagePlain_bad 'bad: fail: exists: vm-ingredient.img' && _messageFAIL
+	
+
+    _messagePlain_nominal '_createVMimage-micro'
+    unset ubVirtImageOverride
+	_createVMimage-micro "$@"
+    export ubVirtImageOverride="$scriptLocal"/"vm-ingredient.img"
+
+    
+
+    _messagePlain_nominal '> _openImage'
+
+	! "$scriptAbsoluteLocation" _openImage && _messagePlain_bad 'fail: _openImage' && _messageFAIL
+	local imagedev
+	imagedev=$(cat "$scriptLocal"/imagedev)
+
+
+
+    _messagePlain_nominal 'remount: compression'
+    sudo -n mount -o remount,compress=zstd:15 "$globalVirtFS"
+
+
+    _messagePlain_nominal 'debootstrap'
+    ! sudo -n debootstrap --variant=minbase --arch amd64 bookworm "$globalVirtFS" && _messageFAIL
+
+    #_messagePlain_nominal 'fstab'
+    #_createVMfstab
+
+    _messagePlain_nominal 'os: globalVirtFS: write: fs'
+    # ATTENTION: Unusual. A complete sudoers file is written here largely for formality, in case 'sudo' has somehow already been installed and may somehow be needed. Later, before sudo is deliberately installed, the sudoers file is deleted, then after sudo is deliberately installed, only the necessary additions are appended.
+    #sudo -n rm -f "$globalVirtFS"/etc/sudoers
+    #tee -a
+    cat << CZXWXcRMTo8EmM8i4d | sudo -n tee "$globalVirtFS"/etc/sudoers > /dev/null
+#
+# This file MUST be edited with the 'visudo' command as root.
+#
+# Please consider adding local content in /etc/sudoers.d/ instead of
+# directly modifying this file.
+#
+# See the man page for details on how to write a sudoers file.
+#
+Defaults        env_reset
+Defaults        mail_badpass
+Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# This fixes CVE-2005-4890 and possibly breaks some versions of kdesu
+# (#1011624, https://bugs.kde.org/show_bug.cgi?id=452532)
+Defaults        use_pty
+
+# This preserves proxy settings from user environments of root
+# equivalent users (group sudo)
+#Defaults:%sudo env_keep += "http_proxy https_proxy ftp_proxy all_proxy no_proxy"
+
+# This allows running arbitrary commands, but so does ALL, and it means
+# different sudoers have their choice of editor respected.
+#Defaults:%sudo env_keep += "EDITOR"
+
+# Completely harmless preservation of a user preference.
+#Defaults:%sudo env_keep += "GREP_COLOR"
+
+# While you shouldn't normally run git as root, you need to with etckeeper
+#Defaults:%sudo env_keep += "GIT_AUTHOR_* GIT_COMMITTER_*"
+
+# Per-user preferences; root won't have sensible values for them.
+#Defaults:%sudo env_keep += "EMAIL DEBEMAIL DEBFULLNAME"
+
+# "sudo scp" or "sudo rsync" should be able to use your SSH agent.
+#Defaults:%sudo env_keep += "SSH_AGENT_PID SSH_AUTH_SOCK"
+
+# Ditto for GPG agent
+#Defaults:%sudo env_keep += "GPG_AGENT_INFO"
+
+# Host alias specification
+
+# User alias specification
+
+# Cmnd alias specification
+
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+
+# Allow members of group sudo to execute any command
+%sudo   ALL=(ALL:ALL) ALL
+
+# See sudoers(5) for more information on "@include" directives:
+
+@includedir /etc/sudoers.d
+#_____
+#Defaults       env_reset
+#Defaults       mail_badpass
+#Defaults       secure_path="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+Defaults  env_keep += "currentChroot"
+Defaults  env_keep += "chrootName"
+
+root    ALL=(ALL:ALL) ALL
+#user   ALL=(ALL:ALL) NOPASSWD: ALL
+#pi ALL=(ALL:ALL) NOPASSWD: ALL
+
+user ALL=(ALL:ALL) NOPASSWD: ALL
+
+%admin   ALL=(ALL:ALL) NOPASSWD: ALL
+%sudo   ALL=(ALL:ALL) NOPASSWD: ALL
+%wheel   ALL=(ALL:ALL) NOPASSWD: ALL
+#%sudo  ALL=(ALL:ALL) ALL
+
+# Important. Prevents possibility of appending to sudoers again by 'rotten_install.sh' .
+# End users may delete this long after dist/OS install is done.
+#noMoreRotten
+
+CZXWXcRMTo8EmM8i4d
+
+
+
+    _messagePlain_nominal '> _closeImage'
+	! "$scriptAbsoluteLocation" _closeImage && _messagePlain_bad 'fail: _closeImage' && _messageFAIL
+
+    
+    _messagePlain_nominal '> _openChRoot'
+	! "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
+	#local imagedev
+	imagedev=$(cat "$scriptLocal"/imagedev)
+
+
+
+    _messagePlain_nominal '> getMost backend'
+    export getMost_backend="chroot"
+	_set_getMost_backend "$@"
+	_set_getMost_backend_debian "$@"
+	_test_getMost_backend "$@"
+	
+
+    _messagePlain_nominal 'apt'
+	_getMost_backend apt-get update
+	_getMost_backend_aptGetInstall auto-apt-proxy
+    _getMost_backend_aptGetInstall apt-transport-https
+    _getMost_backend_aptGetInstall apt-fast
+
+
+    _messagePlain_nominal 'apt: minimal'
+    _getMost_backend_aptGetInstall ca-certificates
+	
+	_getMost_backend_aptGetInstall apt-utils
+
+    _getMost_backend_aptGetInstall wget
+	_getMost_backend_aptGetInstall aria2 curl gpg
+	_getMost_backend_aptGetInstall gnupg
+	_getMost_backend_aptGetInstall lsb-release
+	
+	_getMost_backend_aptGetInstall xz-utils
+
+    _getMost_backend_aptGetInstall openssl jq git lz4 bc xxd
+    _getMost_backend_aptGetInstall pv
+    _getMost_backend_aptGetInstall gh
+
+    _getMost_backend_aptGetInstall p7zip
+	_getMost_backend_aptGetInstall p7zip-full
+    _getMost_backend_aptGetInstall unzip zip
+    _getMost_backend_aptGetInstall lbzip2
+
+	_getMost_backend_aptGetInstall btrfs-tools
+	_getMost_backend_aptGetInstall btrfs-progs
+	_getMost_backend_aptGetInstall btrfs-compsize
+	_getMost_backend_aptGetInstall zstd
+    
+    # ATTENTION: Debian Bookworm sudoers default correctly changes the PATH for root user. Without this, 'cmd.sh', 'bootOnce', etc, will all FAIL - such commands as 'sudo -n poweroff' will FAIL .
+    sudo -n rm -f "$globalVirtFS"/etc/sudoers
+	_getMost_backend_aptGetInstall sudo
+    cat << CZXWXcRMTo8EmM8i4d | sudo -n tee -a "$globalVirtFS"/etc/sudoers > /dev/null
+#_____
+#Defaults       env_reset
+#Defaults       mail_badpass
+#Defaults       secure_path="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+Defaults  env_keep += "currentChroot"
+Defaults  env_keep += "chrootName"
+
+root    ALL=(ALL:ALL) ALL
+#user   ALL=(ALL:ALL) NOPASSWD: ALL
+#pi ALL=(ALL:ALL) NOPASSWD: ALL
+
+user ALL=(ALL:ALL) NOPASSWD: ALL
+
+%admin   ALL=(ALL:ALL) NOPASSWD: ALL
+%sudo   ALL=(ALL:ALL) NOPASSWD: ALL
+%wheel   ALL=(ALL:ALL) NOPASSWD: ALL
+#%sudo  ALL=(ALL:ALL) ALL
+
+# Important. Prevents possibility of appending to sudoers again by 'rotten_install.sh' .
+# End users may delete this long after dist/OS install is done.
+#noMoreRotten
+
+CZXWXcRMTo8EmM8i4d
+
+    _messagePlain_nominal 'hostnamectl'
+	_getMost_backend_aptGetInstall hostnamectl
+	#_getMost_backend_aptGetInstall systemd
+	_chroot hostnamectl set-hostname default
+
+
+	_messagePlain_nominal 'tzdata, locales'
+	_getMost_backend_aptGetInstall tzdata
+	_getMost_backend_aptGetInstall locales
+
+    
+	#_chroot tasksel install standard
+    _getMost_backend_aptGetInstall systemd
+
+
+    _messagePlain_nominal 'apt: DEPENDENCIES'
+    ! _getMost_backend_aptGetInstall fuse expect software-properties-common libvirt-daemon-system libvirt-daemon libvirt-daemon-driver-qemu libvirt-clients man-db && _messagePlain_bad 'bad: FAIL: apt-get install DEPENDENCIES' && _messageFAIL
+	
+
+
+	_messagePlain_nominal 'timedatectl, update-locale, localectl'
+	[[ -e "$globalVirtFS"/usr/share/zoneinfo/America/New_York ]] && _chroot ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
+	#_chroot timedatectl set-timezone US/Eastern
+	#_chroot update-locale LANG=en_US.UTF-8 LANGUAGE
+	#_chroot localectl set-locale LANG=en_US.UTF-8
+	#_chroot localectl --no-convert set-x11-keymap us pc104
+	
+    
+	_messagePlain_nominal 'useradd, usermod'
+    _chroot useradd -m user
+    _chroot usermod -s /bin/bash root
+    _chroot usermod -s /bin/bash user
+
+    _rand_passwd() { cat /dev/urandom 2> /dev/null | base64 2> /dev/null | tr -dc 'a-zA-Z0-9' 2> /dev/null | head -c "$1" 2> /dev/null ; }
+
+    echo 'root:'$(_rand_passwd 15) | _chroot chpasswd
+    echo 'root:'$(_rand_passwd 32) | _chroot chpasswd
+    
+    echo 'user:'$(_rand_passwd 15) | _chroot chpasswd
+    echo 'user:'$(_rand_passwd 32) | _chroot chpasswd
+
+    _chroot groupadd users
+    _chroot groupadd disk
+
+	_chroot usermod -a -G sudo user
+	_chroot usermod -a -G wheel user
+	_chroot usermod -a -G disk user
+	_chroot usermod -a -G users user
+
+
+    _messagePlain_nominal 'apt: upgrade'
+	_chroot env DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" --install-recommends -y upgrade
+
+
+    _messagePlain_nominal 'apt: clean'
+    _chroot env DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y clean
+    _chroot env DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y autoclean
+
+
+    _messagePlain_nominal '> _closeChRoot'
+	! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
+
+    return 0
+}
+
+_create_ingredientVM_online() {
+    type _if_cygwin > /dev/null 2>&1 && _if_cygwin && _messagePlain_warn 'warn: _if_cygwin' && _stop 1
+    _messageNormal '##### init: _create_ingredientVM_online'
+
+    mkdir -p "$scriptLocal"
+    export ubVirtImageOverride="$scriptLocal"/"vm-ingredient.img"
+    
+
+    _messagePlain_nominal '> _openChRoot'
+    ! "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
+
+
+    # WARNING: skimfast - No production use!
+    # WARNING: Do NOT pass skimfast to this function during normal builds. ONLY export the skimfast variable in CI YAML scripts specifically for very rapid development/testing and NOT production use!
+    _messagePlain_nominal 'remount: compression'
+	if [[ "$skimfast" == "true" ]]
+	then
+		#_chroot mount -o remount,compress=zstd:2 /
+        _chroot mount -o remount,compress=zstd:13 /
+	else
+		#_chroot mount -o remount,compress=zstd:9 /
+        _chroot mount -o remount,compress=zstd:15 /
+	fi
+
+
+    _messagePlain_nominal 'report: disk usage'
+    _chroot bash -c 'df --block-size=1000000 --output=used / | tr -dc "0-9" | tee /report-micro-diskUsage'
+
+    
+    # Enable if 'whirlpool' hash, etc, may be used.
+    #_messagePlain_nominal '_custom_splice_opensslConfig'
+    #_create_ingredientVM_ubiquitous_bash '_custom_splice_opensslConfig'
+
+
+
+    _messagePlain_nominal 'apt-key: vbox'
+    wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | _chroot apt-key add -
+    wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | _chroot apt-key add -
+
+    _messagePlain_nominal 'apt-key: docker'
+    curl -fsSL https://download.docker.com/linux/debian/gpg | _chroot apt-key add -
+	local aptKeyFingerprint
+	aptKeyFingerprint=$(_chroot apt-key fingerprint 0EBFCD88 2> /dev/null)
+	[[ "$aptKeyFingerprint" == "" ]] && _messagePlain_bad 'bad: fail: docker apt-key' && _messageFAIL
+
+    _messagePlain_nominal 'apt-key: hashicorp (terraform, vagrant)'
+    curl -fsSL https://apt.releases.hashicorp.com/gpg | _chroot apt-key add -
+
+
+    
+    _messagePlain_nominal '_get_veracrypt'
+    _create_ingredientVM_ubiquitous_bash '_get_veracrypt' 2> >(tail -n 30 >&2)
+
+    
+    _messagePlain_nominal 'ollama install'
+    curl -fsSL https://ollama.com/install.sh | _chroot sudo -n -u user sh 2> >(tail -n 30 >&2)
+    _chroot bash -c '(echo ; echo 'ollama install') | tee -a /report-micro-diskUsage'
+    _chroot bash -c 'df --block-size=1000000 --output=used / | tr -dc "0-9" | tee -a /report-micro-diskUsage'
+
+
+    _messagePlain_nominal 'nix package manager'
+    _create_ingredientVM_ubiquitous_bash '_test_nix-env'
+
+
+    _messagePlain_nominal 'nix package manager - packages'
+    _create_ingredientVM_ubiquitous_bash '_get_from_nix'
+
+
+    _messagePlain_nominal 'nix package manager - gc'
+    _chroot sudo -n -u user /bin/bash -l -c 'cd ; nix-store --gc'
+
+
+    #_messagePlain_nominal '_test_cloud'
+    #_create_ingredientVM_ubiquitous_bash '_test_cloud'
+
+
+    _messagePlain_nominal '_test_linode_cloud'
+    _create_ingredientVM_ubiquitous_bash '_test_linode_cloud'
+
+    
+    _messagePlain_nominal '_test_croc'
+    _create_ingredientVM_ubiquitous_bash '_test_croc'
+
+
+    _messagePlain_nominal '_test_rclone'
+    _create_ingredientVM_ubiquitous_bash '_test_rclone'
+
+
+    # May be achieved in practice with Debian packages from third-party repository.
+    #_messagePlain_nominal '_test_terraform'
+    ##sudo -n apt-add-repository -y "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+    ##vagrant-libvirt vagrant
+    #_create_ingredientVM_ubiquitous_bash '_test_terraform'
+
+
+    # May be achieved in practice with Debian packages from third-party repository.
+    #_messagePlain_nominal '_test_vagrant_build'
+    ##sudo -n apt-add-repository -y "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+    ##vagrant-libvirt vagrant
+    #create_ingredientVM_ubiquitous_bash '_test_vagrant_build'
+
+
+    #firejail
+
+
+    #digimend
+
+
+
+    _messagePlain_nominal '> _closeChRoot'
+	! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
+
+    return 0
+}
+
+_create_ingredientVM_report() {
+    type _if_cygwin > /dev/null 2>&1 && _if_cygwin && _messagePlain_warn 'warn: _if_cygwin' && _stop 1
+    _messageNormal '##### init: _create_ingredientVM_report'
+
+    mkdir -p "$scriptLocal"
+    export ubVirtImageOverride="$scriptLocal"/"vm-ingredient.img"
+    
+
+    _messagePlain_nominal '> _openChRoot'
+    ! "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
+
+
+    _chroot find /bin/ /usr/bin/ /sbin/ /usr/sbin/ | sudo -n tee "$globalVirtFS"/micro-binReport.txt > /dev/null
+    _chroot find /home/user/.nix-profile/bin | sudo -n tee -a "$globalVirtFS"/micro-binReport.txt > /dev/null 2>&1
+    _chroot find /home/user/.gcloud/google-cloud-sdk/bin | sudo -n tee -a "$globalVirtFS"/micro-binReport.txt > /dev/null
+    _chroot find /home/user/.ebcli-virtual-env/executables | sudo -n tee -a "$globalVirtFS"/micro-binReport.txt > /dev/null 2>&1
+    sudo -n cp -f "$globalVirtFS"/micro-binReport.txt "$scriptLocal"/micro-binReport.txt
+    sudo -n chown "$USER":"$USER" "$scriptLocal"/micro-binReport.txt
+
+    _chroot dpkg --get-selections | cut -f1 | sudo -n tee "$globalVirtFS"/micro-dpkg.txt > /dev/null
+    sudo -n cp -f "$globalVirtFS"/micro-dpkg.txt "$scriptLocal"/micro-dpkg.txt
+    sudo -n chown "$USER":"$USER" "$scriptLocal"/micro-dpkg.txt
+
+
+    _messagePlain_nominal '> _closeChRoot'
+	! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
+
+    return 0
+}
+
+
+
+
+_create_ingredientVM_zeroFill() {
+    type _if_cygwin > /dev/null 2>&1 && _if_cygwin && _messagePlain_warn 'warn: _if_cygwin' && _stop 1
+    _messageNormal '##### init: _create_ingredientVM_zeroFill'
+
+    mkdir -p "$scriptLocal"
+    export ubVirtImageOverride="$scriptLocal"/"vm-ingredient.img"
+    
+
+    _messagePlain_nominal '> _openChRoot'
+    ! "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
+
+
+
+    _messagePlain_nominal 'zero fill: root'
+    _chroot mount -o remount,compress=none /
+	_chroot rm -f /fill > /dev/null 2>&1
+	_chroot dd if=/dev/zero of=/fill bs=1M count=1 oflag=append conv=notrunc status=progress
+	#_chroot btrfs property set /fill compression ""
+	_chroot dd if=/dev/zero of=/fill bs=1M oflag=append conv=notrunc status=progress
+	_chroot rm -f /fill
+	
+    # WARNING: skimfast - No production use!
+    # WARNING: Do NOT pass skimfast to this function during normal builds. ONLY export the skimfast variable in CI YAML scripts specifically for very rapid development/testing and NOT production use!
+	if [[ "$skimfast" == "true" ]]
+	then
+		#_chroot mount -o remount,compress=zstd:2 /
+        _chroot mount -o remount,compress=zstd:13 /
+	else
+		#_chroot mount -o remount,compress=zstd:9 /
+        _chroot mount -o remount,compress=zstd:15 /
+	fi
+
+
+    _messagePlain_nominal 'zero fill: boot'
+	_chroot rm -f /boot/fill > /dev/null 2>&1
+	_chroot dd if=/dev/zero of=/boot/fill bs=1M count=1 oflag=append conv=notrunc status=progress
+	_chroot dd if=/dev/zero of=/boot/fill bs=1M oflag=append conv=notrunc status=progress
+	_chroot rm -f /boot/fill
+
+
+
+    _messagePlain_nominal '> _closeChRoot'
+	! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
+
+    return 0
+}
+
+
+
+
+
+
+
+
+
+_create_ingredientVM_diskUsage() {
+    _chroot bash -c '(echo ; echo '"$1"') | tee -a /report-micro-diskUsage'
+    _chroot bash -c 'df --block-size=1000000 --output=used / | tr -dc "0-9" | tee -a /report-micro-diskUsage'
+}
+
+_create_ingredientVM_ubiquitous_bash() {
+    _chroot sudo -n --preserve-env=devfast -u user bash -c 'cd /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ ; /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ubiquitous_bash.sh '"$1"
+    
+    _create_ingredientVM_diskUsage "$1"
+}
+
+_create_ingredientVM_ubiquitous_bash_sequence-cp() {
+    type _if_cygwin > /dev/null 2>&1 && _if_cygwin && _messagePlain_warn 'warn: _if_cygwin' && _stop 1
+    _messageNormal '##### init: _create_ingredientVM_ubiquitous_bash-cp'
+    _start
+	
+	local functionEntryPWD="$PWD"
+
+    mkdir -p "$scriptLocal"
+    export ubVirtImageOverride="$scriptLocal"/"vm-ingredient.img"
+
+
+
+    _messagePlain_nominal '> _openChRoot'
+    ! "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
+
+    
+
+	_messagePlain_nominal 'remount: compression'
+    sudo -n mount -o remount,compress=zstd:15 "$globalVirtFS"
+
+
+    # https://superuser.com/questions/1559417/how-to-discard-only-mode-changes-with-git
+	cd "$scriptLib"/ubiquitous_bash
+	_messagePlain_probe_cmd ls -ld _lib/kit/app/researchEngine
+	local currentConfig
+	currentConfig=$(git config core.fileMode)
+	_messagePlain_probe_cmd git config core.fileMode true
+	_messagePlain_probe_cmd find . -type f -exec chmod 644 {} \;
+	_messagePlain_probe_cmd find . -type d -exec chmod 755 {} \;
+	#git reset --hard
+	_messagePlain_probe "git diff -p | grep -E '^(diff|old mode|new mode)' | sed -e 's/^old/NEW/;s/^new/old/;s/^NEW/new/'"
+	#git diff -p | grep -E '^(diff|old mode|new mode)' | sed -e 's/^old/NEW/;s/^new/old/;s/^NEW/new/'
+	#git diff -p | grep -E '^(diff|old mode|new mode)' | sed -e 's/^old/NEW/;s/^new/old/;s/^NEW/new/' | git apply
+
+	# ATTRIBUTION: ChatGPT o1-preview 2024-11-18
+	git diff -p | awk '
+	  /^diff --git/ { diff = $0; next }
+	  /^old mode/   { old_mode = $0; next }
+	  /^new mode/   { new_mode = $0;
+	                  print diff;
+	                  print old_mode;
+	                  print new_mode;
+	                }' | sed -e 's/^old/NEW/;s/^new/old/;s/^NEW/new/' | tee /dev/stdout > "$safeTmp"/patch.txt
+    cat "$safeTmp"/patch.txt | git apply
+
+	sleep 9
+	git config core.fileMode "$currentConfig"
+	cd "$functionEntryPWD"
+
+	_messagePlain_probe_cmd ls -l "$scriptLib"/ubiquitous_bash/ubiquitous_bash.sh
+
+	sudo -n mkdir -p "$globalVirtFS"/home/user/temp_micro/test_"$ubiquitiousBashIDnano"
+	sudo -n cp -a "$scriptLib"/ubiquitous_bash "$globalVirtFS"/home/user/temp_micro/test_"$ubiquitousBashIDnano"/
+	
+	_chroot chown -R user:user /home/user/temp_micro/test_"$ubiquitiousBashIDnano"/
+	#_chroot sudo -n -u user bash -c 'cd /home/user/temp_micro/test_"'"$ubiquitousBashIDnano"'"/ ; git reset --hard'
+
+	_messagePlain_probe_cmd _chroot ls -l /home/user/temp_micro/test_"$ubiquitiousBashIDnano"/ubiquitous_bash/ubiquitous_bash.sh
+
+	if ! _chroot sudo -n --preserve-env=devfast -u user bash -c 'cd /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ ; /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ubiquitous_bash.sh _true'
+	then
+		_messageFAIL
+	fi
+
+    if _chroot sudo -n --preserve-env=devfast -u user bash -c 'cd /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ ; /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ubiquitous_bash.sh _false'
+	then
+		_messageFAIL
+	fi
+    
+
+    #_messagePlain_nominal '_setupUbiquitous , _custom_splice_opensslConfig'
+    #_chroot sudo -n --preserve-env=devfast -u user bash -c 'cd /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ ; /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ubiquitous_bash.sh '"_setupUbiquitous"
+    #_chroot sudo -n --preserve-env=devfast -u user bash -c 'cd /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ ; /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ubiquitous_bash.sh '"_custom_splice_opensslConfig"
+
+
+    _messagePlain_nominal '> _closeChRoot'
+	! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
+
+    _stop
+    #return 0
+}
+_create_ingredientVM_ubiquitous_bash-cp() {
+    if ! "$scriptAbsoluteLocation" _create_ingredientVM_ubiquitous_bash_sequence-cp "$@"
+    then
+        _stop 1
+    fi
+    return 0
+}
+_create_ingredientVM_ubiquitous_bash-rm() {
+    type _if_cygwin > /dev/null 2>&1 && _if_cygwin && _messagePlain_warn 'warn: _if_cygwin' && _stop 1
+    _messageNormal '##### init: _create_ingredientVM_ubiquitous_bash-rm'
+	
+	local functionEntryPWD="$PWD"
+
+    mkdir -p "$scriptLocal"
+    export ubVirtImageOverride="$scriptLocal"/"vm-ingredient.img"
+    
+
+
+    _messagePlain_nominal '> _openChRoot'
+    ! "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
+
+
+
+	_messagePlain_nominal 'remount: compression'
+    sudo -n mount -o remount,compress=zstd:15 "$globalVirtFS"
+
+
+    ## DANGER: Rare case of 'rm -rf' , called through '_chroot' instead of '_safeRMR' . If not called through '_chroot', very dangerous!
+	_chroot rm -rf /home/user/temp_micro/test_"$ubiquitiousBashIDnano"/ubiquitous_bash/
+	_chroot rmdir /home/user/temp_micro/test_"$ubiquitiousBashIDnano"/
+	_chroot rmdir /home/user/temp_micro/
+
+
+
+    _messagePlain_nominal '> _closeChRoot'
+	! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
+
+    return 0
+}
+
+
+
+
+
+
+_openChRoot_ingredient() {
+    # WARNING: Variable "$scriptLocal" will be defined differently, if at all, in an interactive shell outside the context of this script.
+    #  Thus, this function exists mostly to provide access to the "_openChRoot" command with the  'ubVirtImageOverride' variable coorrectly set, with the bonus of not changing with the user's 'ubVirtImageOverride' variable.
+    export ubVirtImageOverride="$scriptLocal"/"vm-ingredient.img"
+    "$scriptAbsoluteLocation" _openChRoot "$@"
+}
+#--force
+_closeChRoot_ingredient() {
+    # WARNING: Variable "$scriptLocal" will be defined differently, if at all, in an interactive shell outside the context of this script.
+    #  Thus, this function exists mostly to provide access to the "_openChRoot" command with the  'ubVirtImageOverride' variable coorrectly set, with the bonus of not changing with the user's 'ubVirtImageOverride' variable.
+    export ubVirtImageOverride="$scriptLocal"/"vm-ingredient.img"
+    "$scriptAbsoluteLocation" _closeChRoot "$@"
+}
+
+_create_ingredientVM_experiment() {
+    type _if_cygwin > /dev/null 2>&1 && _if_cygwin && _messagePlain_warn 'warn: _if_cygwin' && _stop 1
+    if [[ ! -e "$scriptLocal"/vm-ingredient.img ]]
+    then
+        if !_create_ingredientVM_image "$@"
+        then
+            _messageFAIL
+        fi
+    fi
+    
+    if ! "$scriptAbsoluteLocation" _create_ingredientVM_ubiquitous_bash-cp "$@"
+    then
+        _stop 1
+    fi
+    
+    _messageNormal '##### init: _experiment'
+
+    mkdir -p "$scriptLocal"
+    export ubVirtImageOverride="$scriptLocal"/"vm-ingredient.img"
+    
+
+    _messagePlain_nominal '> _openChRoot'
+    ! "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
+    
+    _messagePlain_nominal '_setupUbiquitous , _custom_splice_opensslConfig'
+    sudo -n mount -o remount,compress=zstd:13 "$globalVirtFS"
+    _chroot sudo -n --preserve-env=devfast -u user bash -c 'cd /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ ; /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ubiquitous_bash.sh '"_setupUbiquitous"
+    _chroot sudo -n --preserve-env=devfast -u user bash -c 'cd /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ ; /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ubiquitous_bash.sh '"_custom_splice_opensslConfig"
+
+    _chroot sudo -n -u user bash -c 'cd /home/user/temp_micro/test_'"$ubiquitiousBashIDnano"'/ubiquitous_bash/ ; bash -i'
+
+
+    _messagePlain_nominal '> _closeChRoot'
+	! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
+
+
+    if ! "$scriptAbsoluteLocation" _create_ingredientVM_ubiquitous_bash-rm "$@"
+    then
+        _stop 1
+    fi
+
+    return 0
+}
+
+
+
+
+
+
+
+
+
+
+
 #currentReversePort=""
 #currentMatchingReversePorts=""
 #currentReversePortOffset=""
@@ -57352,6 +58193,7 @@ _compile_bash_deps() {
 		_deps_dev_buildOps
 		
 		_deps_notLean
+		_deps_os_x11
 		
 		_deps_serial
 
@@ -57680,7 +58522,7 @@ _compile_bash_deps() {
 		_deps_python
 		_deps_haskell
 		
-		_deps_ai
+		#_deps_ai
 		_deps_ai_shortuts
 		
 		_deps_calculators
@@ -57741,6 +58583,12 @@ _compile_bash_deps() {
 		_deps_build_bash_ubiquitous
 		
 		return 0
+	fi
+
+	if [[ "$1" == "core_ai" ]]
+	then
+		_deps_ai
+		_compile_bash_deps 'core'
 	fi
 	
 	if [[ "$1" == "" ]] || [[ "$1" == "ubiquitous_bash" ]] || [[ "$1" == "ubiquitous_bash.sh" ]] || [[ "$1" == "complete" ]]
@@ -57871,6 +58719,9 @@ _compile_bash_header() {
 	includeScriptList+=( "os/override"/override_prog.sh )
 	
 	includeScriptList+=( "os/override"/override_cygwin.sh )
+	includeScriptList+=( "os/override"/override_wsl.sh )
+
+	includeScriptList+=( "special"/ingredients.sh )
 }
 
 _compile_bash_header_program() {
@@ -58161,6 +59012,7 @@ _compile_bash_shortcuts() {
 	[[ "$enUb_dev" == "true" ]] && includeScriptList+=( "shortcuts/dev/scope"/devscope_app.sh )
 
 	( [[ "$enUb_github" == "true" ]] || [[ "$enUb_notLean" == "true" ]] || [[ "$enUb_cloud" == "true" ]] || [[ "$enUb_cloud_heavy" == "true" ]] || [[ "$enUb_cloud_self" == "true" ]] ) && includeScriptList+=( "shortcuts/github"/github_removeHTTPS.sh )
+	( [[ "$enUb_github" == "true" ]] || [[ "$enUb_notLean" == "true" ]] || [[ "$enUb_cloud" == "true" ]] || [[ "$enUb_cloud_heavy" == "true" ]] || [[ "$enUb_cloud_self" == "true" ]] ) && includeScriptList+=( "shortcuts/github"/github_upload_parts.sh )
 	
 	( [[ "$enUb_repo" == "true" ]] && [[ "$enUb_git" == "true" ]] ) && includeScriptList+=( "shortcuts/git"/git.sh )
 	( [[ "$enUb_repo" == "true" ]] && [[ "$enUb_git" == "true" ]] ) && includeScriptList+=( "shortcuts/git"/gitBare.sh )
@@ -58619,11 +59471,14 @@ _compile_bash() {
 		includeScriptList+=( "generic"/rottenheader.sh )
 		#includeScriptList+=( "generic"/minimalheader.sh )
 		#includeScriptList+=( "generic"/ubiquitousheader.sh )
+
+		includeScriptList+=( "special"/ingredients.sh )
 		
 		#includeScriptList+=( "os/override"/override.sh )
 		#includeScriptList+=( "os/override"/override_prog.sh )
 		
 		#includeScriptList+=( "os/override"/override_cygwin.sh )
+		#includeScriptList+=( "os/override"/override_wsl.sh )
 		
 		
 		
@@ -58911,6 +59766,11 @@ _compile_bash_program_prog() {
 
 
 	includeScriptList+=( core-upgrade.sh )
+
+
+
+
+	includeScriptList+=( core-micro.sh )
 	
 	true
 }

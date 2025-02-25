@@ -295,31 +295,44 @@ _create_ubDistBuild-create() {
 	
 	
 	
-	_createVMimage "$@"
+	if [[ ! -e "$scriptLocal"/vm-ingredient.img ]]
+	then
+
+		_createVMimage "$@"
+		
+		
+		
+		_messageNormal 'os: globalVirtFS: debootstrap'
+		
+		! "$scriptAbsoluteLocation" _openImage && _messagePlain_bad 'fail: _openImage' && _messageFAIL
+		local imagedev
+		imagedev=$(cat "$scriptLocal"/imagedev)
+		
+		
+		# https://gist.github.com/superboum/1c7adcd967d3e15dfbd30d04b9ae6144
+		# https://gist.github.com/dyejon/8e78b97c4eba954ddbda7ae482821879
+		#http://deb.debian.org/debian/
+		#--components=main --include=inetutils-ping,iproute
+		#! sudo -n debootstrap --variant=minbase --arch amd64 bullseye "$globalVirtFS" && _messageFAIL
+		! sudo -n debootstrap --variant=minbase --arch amd64 bookworm "$globalVirtFS" && _messageFAIL
+		
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	_messageNormal 'os: globalVirtFS: debootstrap'
-	
+		! "$scriptAbsoluteLocation" _closeImage && _messagePlain_bad 'fail: _closeImage' && _messageFAIL
+	else
+		mv -f "$scriptLocal"/vm-ingredient.img "$scriptLocal"/vm.img
+		[[ -e "$scriptLocal"/vm-ingredient.img ]] && _messagePlain_bad 'bad: fail: mv: vm-ingredient.img' && _messageFAIL
+		[[ ! -e "$scriptLocal"/vm.img ]] && _messagePlain_bad 'bad: fail: mv: vm-ingredient.img' && _messageFAIL
+
+		unset ubVirtImageOverride
+		_createVMimage-micro-expand
+	fi
+
+
+
 	! "$scriptAbsoluteLocation" _openImage && _messagePlain_bad 'fail: _openImage' && _messageFAIL
 	local imagedev
 	imagedev=$(cat "$scriptLocal"/imagedev)
-	
-	
-	# https://gist.github.com/superboum/1c7adcd967d3e15dfbd30d04b9ae6144
-	# https://gist.github.com/dyejon/8e78b97c4eba954ddbda7ae482821879
-	#http://deb.debian.org/debian/
-	#--components=main --include=inetutils-ping,iproute
-	#! sudo -n debootstrap --variant=minbase --arch amd64 bullseye "$globalVirtFS" && _messageFAIL
-	! sudo -n debootstrap --variant=minbase --arch amd64 bookworm "$globalVirtFS" && _messageFAIL
-	
-	
+
 	
 	_createVMfstab
 	
@@ -536,9 +549,6 @@ CZXWXcRMTo8EmM8i4d
 	echo 'deb http://deb.debian.org/debian bookworm-backports main contrib' | _getMost_backend tee /etc/apt/sources.list.d/ub_backports.list > /dev/null
 
 
-	echo 'deb [signed-by=/etc/apt/keyrings/apt-fast.gpg] http://ppa.launchpad.net/apt-fast/stable/ubuntu jammy main' | _getMost_backend tee /etc/apt/sources.list.d/apt-fast.list > /dev/null
-
-
 	_getMost_backend apt-get update
 	
 	
@@ -549,9 +559,14 @@ CZXWXcRMTo8EmM8i4d
 
 
 	_getMost_backend_aptGetInstall aria2 curl gpg
+	_getMost_backend_aptGetInstall gnupg
+	_getMost_backend_aptGetInstall lsb-release
 	
+	echo 'deb [signed-by=/etc/apt/keyrings/apt-fast.gpg] http://ppa.launchpad.net/apt-fast/stable/ubuntu jammy main' | _getMost_backend tee /etc/apt/sources.list.d/apt-fast.list > /dev/null
 	_getMost_backend mkdir -p /etc/apt/keyrings
 	_getMost_backend curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B' | _getMost_backend gpg --dearmor -o /etc/apt/keyrings/apt-fast.gpg
+	# ATTRIBUTION-AI: ChatGPT o3-mini-high 2025-02-13
+	_getMost_backend apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 1E2824A7F22B44BD 1EE2FF37CA8DA16B
 	_getMost_backend apt-get update
 	_getMost_backend_aptGetInstall apt-fast
 
@@ -711,6 +726,23 @@ CZXWXcRMTo8EmM8i4d
 		#_chroot rsync -ax /linux-firmware/. /lib/firmware
 	#fi
 	
+
+	_messagePlain_nominal 'special (ie. packages missed by Debian Stable distribution, etc)'
+
+	sudo -n cp "$scriptLib"/"setup/debian/curlftpfs_0.9.2-9+b1_amd64.deb" "$globalVirtFS"/
+	if _chroot ls -A -1 "/curlftpfs_0.9.2-9+b1_amd64.deb" > /dev/null
+	then
+		_chroot dpkg -i "/curlftpfs_0.9.2-9+b1_amd64.deb"
+	else
+		# WARNING: HTTP (as opposed to HTTPS) strongly discouraged.
+		#_chroot wget 'http://ftp.debian.org/debian/pool/main/c/curlftpfs/curlftpfs_0.9.2-9+b1_amd64.deb'
+		_chroot wget 'https://mirrorservice.org/sites/ftp.debian.org/debian/pool/main/c/curlftpfs/curlftpfs_0.9.2-9+b1_amd64.deb'
+		
+		_chroot dpkg -i "./curlftpfs_0.9.2-9+b1_amd64.deb"
+	fi
+
+	_getMost_backend_aptGetInstall curlftpfs
+
 	
 	
 	_messagePlain_nominal 'tzdata, locales'
@@ -908,7 +940,7 @@ _create_ubDistBuild-rotten_install() {
 	
 	
 	_chroot apt-get -y clean
-	_chroot sudo -n apt-get autoremove --purge
+	_chroot sudo -n apt-get autoremove -y --purge
 
 	# https://forum.manjaro.org/t/high-cpu-usage-from-plasmashell-kactivitymanagerd/114305
 	# Apparently prevents excessive CPU usage from plasmashell , etc .
@@ -1803,13 +1835,16 @@ _create_ubDistBuild-bootOnce-qemu_sequence() {
 	#disown -a -r
 	
 	# Up to 700s per kernel (ie. modules), plus 500s, total of 1147s for one kernel, 1749s to wait for three kernels.
-	_messagePlain_nominal 'wait: 6200s'
+	#6200s ... had a track record of a few years
+	# Prefer 6200s, as this is normally sufficient for both the apparent ~1900s without compiling vbox kernel modules, and longer times if compiling under qemu virtualizaton.
+	# The longer 13500s wait is mostly only beneficial ONLY to make the exit status a clearly unambigious statement that FAIL actually happened, not merely timeout before compiling could complete.
+	_messagePlain_nominal 'wait: 13500s'
 	local currentIterationWait
 	currentIterationWait=0
 	pgrep qemu-system
 	pgrep qemu
 	ps -p "$currentPID"
-	while [[ "$currentIterationWait" -lt 6200 ]] && ( pgrep qemu-system > /dev/null 2>&1 || pgrep qemu > /dev/null 2>&1 || ps -p "$currentPID" > /dev/null 2>&1 )
+	while [[ "$currentIterationWait" -lt 13500 ]] && ( pgrep qemu-system > /dev/null 2>&1 || pgrep qemu > /dev/null 2>&1 || ps -p "$currentPID" > /dev/null 2>&1 )
 	do
 		if ( [[ "$qemuXvfb" == "true" ]] && ( [[ "$currentIterationWait" -le 320 ]] && [[ $(bc <<< "$currentIterationWait % 5") == 0 ]] ) || [[ $(bc <<< "$currentIterationWait % 30") == 0 ]] )
 		then
@@ -1825,7 +1860,7 @@ _create_ubDistBuild-bootOnce-qemu_sequence() {
 		let currentIterationWait=currentIterationWait+1
 	done
 	_messagePlain_probe_var currentIterationWait
-	[[ "$currentIterationWait" -ge 6200 ]] && _messagePlain_bad 'bad: fail: bootdisc: poweroff' && currentExitStatus=1
+	[[ "$currentIterationWait" -ge 13500 ]] && _messagePlain_bad 'bad: fail: bootdisc: poweroff' && currentExitStatus=1
 	sleep 27
 	
 	
@@ -2366,13 +2401,14 @@ _ubDistBuild_split-tail_procedure() {
 	do
 		[[ -s ./"$1" ]] && [[ -e ./"$1" ]] && tail -c 1997537280 "$1" > "$1".part"$currentIteration" && truncate -s -1997537280 "$1"
 	done
+	return 0
 }
 
 # Expected fastest.
 # ATTRIBUTION-AI: ChatGPT o1 2025-01-14 
 _ubDistBuild_split-reflink_procedure() {
     local inputFile=""$1""
-    local chunkSize=1997537280  # ~1.86 GB
+    local chunkSize=1997537280  # ~1.86 GiB
     local currentIteration=0
 
     # Sanity check
@@ -2405,6 +2441,7 @@ _ubDistBuild_split-reflink_procedure() {
 
         ((currentIteration++))
     done
+	return 0
 }
 
 # Expected to avoid repeatedly reading most of file through 'tail', however, not as fast as near-instant sector mapping.
@@ -2857,7 +2894,9 @@ _zSpecial_qemu_sequence_prog() {
 	
 	# sudo -n systemctl status vboxdrv
 	echo '#!/usr/bin/env bash' >> "$hostToGuestFiles"/cmd.sh
+	echo 'date +"%Y-%m-%d" | sudo -n tee /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo 'sudo -n update-grub' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: update-grub" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo '_detect_process_compile() {
 	pgrep cc1 && return 0
 	pgrep apt && return 0
@@ -2871,20 +2910,29 @@ _zSpecial_qemu_sequence_prog() {
 	# If uncommented, any indefinite delay in '_detect_process_compile' may cause failure.
 	#echo 'while _detect_process_compile && sleep 27 && _detect_process_compile && sleep 27 && _detect_process_compile ; do sleep 27 ; done' >> "$hostToGuestFiles"/cmd.sh
 	
+	echo 'echo done: "_detect_process_compile (if uncommented)" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo 'sleep 15' >> "$hostToGuestFiles"/cmd.sh
 	echo '! sudo -n lsmod | grep -i vboxdrv && sudo -n /sbin/vboxconfig' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: vboxconfig" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo 'sleep 75' >> "$hostToGuestFiles"/cmd.sh
 	echo 'sudo -n lsmod | cut -f1 -d\  | sudo -n tee /lsmodReport' >> "$hostToGuestFiles"/cmd.sh
+	echo 'cat /lsmodReport | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: lsmodReport" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo '[[ ! -e /kded5-done ]] && kded5 --check' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: kded5 --check (1 of 2)" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo '[[ ! -e /kded5-done ]] && sleep 90' >> "$hostToGuestFiles"/cmd.sh
 
 	echo '[[ ! -e /FW-done ]] && cd /home/user/.ubcore/ubiquitous_bash ; ./ubiquitous_bash.sh _cfgFW-desktop | sudo -n tee /cfgFW.log ; cd' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: cfgFW-desktop (1 of 2)" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo '[[ ! -e /FW-done ]] && cd /home/user/.ubcore/ubiquitous_bash ; ./ubiquitous_bash.sh _cfgFW-desktop | sudo -n tee /cfgFW.log ; cd' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: cfgFW-desktop (2 of 2)" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 
 	echo '[[ ! -e /kded5-done ]] && kded5 --check' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: kded5 --check (2 of 2)" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo '( [[ ! -e /kded5-done ]] || [[ ! -e /FW-done ]] ) && sleep 420' >> "$hostToGuestFiles"/cmd.sh
 	echo 'echo | sudo -n tee /kded5-done' >> "$hostToGuestFiles"/cmd.sh
 	echo 'echo | sudo -n tee /FW-done' >> "$hostToGuestFiles"/cmd.sh
+	echo 'echo "done: sleep , /kded5-done , /FW-done" | sudo -n tee -a /var/log/bootOnce.log' >> "$hostToGuestFiles"/cmd.sh
 	echo 'sudo -n poweroff' >> "$hostToGuestFiles"/cmd.sh
 }
 
@@ -3063,8 +3111,10 @@ _zSpecial_qemu() {
 
 
 
-_chroot_test() {
+_chroot_test_sequence() {
 	_messageNormal '##### init: _chroot_test'
+	_start
+
 	echo
 	
 	local functionEntryPWD="$PWD"
@@ -3112,7 +3162,8 @@ _chroot_test() {
 	                  print diff;
 	                  print old_mode;
 	                  print new_mode;
-	                }' | sed -e 's/^old/NEW/;s/^new/old/;s/^NEW/new/' | tee /dev/sdtout | git apply
+	                }' | sed -e 's/^old/NEW/;s/^new/old/;s/^NEW/new/' | tee /dev/stdout > "$safeTmp"/patch.txt
+	cat "$safeTmp"/patch.txt | git apply
 
 	sleep 9
 	git config core.fileMode "$currentConfig"
@@ -3142,6 +3193,14 @@ _chroot_test() {
 	! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
 
 	cd "$functionEntryPWD"
+	_stop
+	#return 0
+}
+_chroot_test() {
+	if ! "$scriptAbsoluteLocation" _chroot_test_sequence "$@"
+	then
+		_stop 1
+	fi
 	return 0
 }
 
