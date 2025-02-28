@@ -20,7 +20,7 @@ _custom() {
 	echo '###################################################################################################'
 	
 	
-	
+	# CAUTION: Needs "$GH_TOKEN" .
 	_custom_kernel_server
 	
 	
@@ -128,6 +128,8 @@ CZXWXcRMTo8EmM8i4d
 
 
 	! _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
+
+	return 0
 }
 
 _custom-expand() {
@@ -178,6 +180,8 @@ _custom-repo() {
 	_git-custom-repo variant org repo
 	
 	_git-custom-repo variant org repo_bundle
+
+	return 0
 }
 
 
@@ -196,5 +200,7 @@ _git-custom-repo() {
 	fi
 	
 	! _closeChRoot && _messageFAIL
+
+	return 0
 }
 
