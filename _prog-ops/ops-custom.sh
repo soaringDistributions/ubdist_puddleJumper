@@ -177,9 +177,17 @@ _custom-expand() {
 }
 
 _custom-repo() {
-	_git-custom-repo variant org repo
+	#_git-custom-repo variant org repo
 	
-	_git-custom-repo variant org repo_bundle
+	#_git-custom-repo variant org repo_bundle
+
+	#export GH_TOKEN="$GH_TOKEN_publicEquiv_auto"
+
+	#git-custom-repo ...
+
+	#export GH_TOKEN=...
+	
+	#git-custom-repo ...
 
 	return 0
 }
