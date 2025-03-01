@@ -118,7 +118,8 @@ CZXWXcRMTo8EmM8i4d
 	
 	# DANGER: Though it might be nice to have a copy of Docker images used by researchEngine, it is NOT acceptable to have any unnecessary network services on a puddleJumper .
 	#_messageNormal '***** ***** ***** ***** ***** custom: researchEngine'
-	#_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _setup_researchEngine'
+	#! _chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest submodule update --recursive ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _upgrade_researchEngine' && _messageFAIL
+	#_chroot /bin/bash -c '[ -e "'"/home/user/core/data/searxng/settings.yml.rej"'" ]' && _messageFAIL
 
 	# ATTENTION: Ensures a copy of important LLM models is available from puddleJumper . These may be extracted:
 	#ollama show Llama-augment --modelfile
@@ -214,4 +215,162 @@ _git-custom-repo() {
 
 	return 0
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ATTENTION: Nearly identical to _custom . Significant differences:
+_upgrade_custom() {
+	local functionEntryPWD
+	functionEntryPWD="$PWD"
+	
+	_start
+
+	# ATTENTION
+	export GH_TOKEN="$GH_TOKEN_publicEquiv_auto"
+	
+	
+	_chroot bash -c 'echo root:$(cat /dev/urandom 2> /dev/null | base64 2> /dev/null | tr -dc a-zA-Z0-9 2> /dev/null | head -c 12 2> /dev/null) | chpasswd'
+	_chroot bash -c 'echo root:$(cat /dev/urandom 2> /dev/null | base64 2> /dev/null | tr -dc a-zA-Z0-9 2> /dev/null | head -c 32 2> /dev/null) | chpasswd'
+	
+	_chroot bash -c 'echo user:$(cat /dev/urandom 2> /dev/null | base64 2> /dev/null | tr -dc a-zA-Z0-9 2> /dev/null | head -c 12 2> /dev/null) | chpasswd'
+	_chroot bash -c 'echo user:$(cat /dev/urandom 2> /dev/null | base64 2> /dev/null | tr -dc a-zA-Z0-9 2> /dev/null | head -c 32 2> /dev/null) | chpasswd'
+	
+	
+	echo '###################################################################################################'
+	echo '###################################################################################################'
+	echo '###################################################################################################'
+	
+	
+	# CAUTION: Needs "$GH_TOKEN" .
+	_custom_kernel_server
+	
+	
+	
+	echo '###################################################################################################'
+	echo '###################################################################################################'
+	echo '###################################################################################################'
+	
+
+
+	! _openChRoot && _messageFAIL
+	
+	#sudo -n apt-get -y install vsftpd
+	if ! sudo -n ls "$globalVirtFS"/home/user/core/infrastructure/puddleJumper
+	then
+		_chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'mkdir -p /home/user/core/'infrastructure' ; cd /home/user/core/'infrastructure' ; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest clone --recursive --depth 1 git@github.com:'mirage335-gizmos'/'puddleJumper'.git'
+		if ! sudo -n ls "$globalVirtFS"/home/user/core/infrastructure/puddleJumper
+		then
+			_messagePlain_bad 'bad: FAIL: missing: '/home/user/core/infrastructure/puddleJumper
+			_messageFAIL
+			_stop 1
+			return 1
+		fi
+	fi
+	_chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/puddleJumper ; /home/user/ubDistBuild/ubiquitous_bash.sh _gitBest pull'
+
+	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/puddleJumper ; ./ubiquitous_bash.sh _install'
+	
+	! _closeChRoot && _messageFAIL
+	
+	
+	
+	echo '###################################################################################################'
+	echo '###################################################################################################'
+	echo '###################################################################################################'
+
+	
+		
+	! _openChRoot && _messageFAIL
+	
+
+	custom_hostname="puddleJumper"
+	
+	echo "$custom_hostname" | sudo -n tee "$globalVirtFS"/etc/hostname > /dev/null 2>&1
+	cat << CZXWXcRMTo8EmM8i4d | sudo -n tee "$globalVirtFS"/etc/hosts > /dev/null 2>&1
+127.0.0.1	localhost
+::1		localhost ip6-localhost ip6-loopback
+ff02::1		ip6-allnodes
+ff02::2		ip6-allrouters
+
+127.0.1.1	$custom_hostname
+
+CZXWXcRMTo8EmM8i4d
+
+	_chroot hostname "$custom_hostname"
+	
+	
+	! _closeChRoot && _messageFAIL
+
+
+	
+	echo '###################################################################################################'
+	echo '###################################################################################################'
+	echo '###################################################################################################'
+	
+	! _openChRoot && _messagePlain_bad 'fail: openChroot' && _messageFAIL
+
+	sudo -n cp -a -f /home/user/core/installations/pumpCompanion.exe "$globalVirtFS"/home/user/core/installations/
+	_wget_githubRelease "mirage335-gizmos/pumpCompanion" "internal" "pumpCompanion.exe"
+	[[ $(wc -c pumpCompanion.exe | cut -f1 -d\  | tr -dc '0-9') -lt 1000000 ]] && rm -f pumpCompanion.exe
+	sudo -n mv -f pumpCompanion.exe "$globalVirtFS"/home/user/core/installations/
+	
+	sudo -n cp -a -f /home/user/core/installations/extIface.exe "$globalVirtFS"/home/user/core/installations/
+	_wget_githubRelease "mirage335-colossus/extendedInterface" "internal" "extIface.exe"
+	[[ $(wc -c extIface.exe | cut -f1 -d\  | tr -dc '0-9') -lt 1000000 ]] && rm -f extIface.exe
+	sudo -n mv -f extIface.exe "$globalVirtFS"/home/user/core/installations/
+	
+	sudo -n cp -a -f /home/user/core/installations/ubDistBuild.exe "$globalVirtFS"/home/user/core/installations/
+	_wget_githubRelease "soaringDistributions/ubDistBuild" "internal" "ubDistBuild.exe"
+	[[ $(wc -c ubDistBuild.exe | cut -f1 -d\  | tr -dc '0-9') -lt 1000000 ]] && rm -f ubDistBuild.exe
+	sudo -n mv -f ubDistBuild.exe "$globalVirtFS"/home/user/core/installations/
+	
+	! _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
+	
+	echo '###################################################################################################'
+	echo '###################################################################################################'
+	echo '###################################################################################################'
+	
+	
+	
+	! _openChRoot && _messagePlain_bad 'fail: openChroot' && _messageFAIL
+	
+	# DANGER: Though it might be nice to have a copy of Docker images used by researchEngine, it is NOT acceptable to have any unnecessary network services on a puddleJumper .
+	#_messageNormal '***** ***** ***** ***** ***** custom: researchEngine'
+	#! _chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest submodule update --recursive ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _upgrade_researchEngine' && _messageFAIL
+	#_chroot /bin/bash -c '[ -e "'"/home/user/core/data/searxng/settings.yml.rej"'" ]' && _messageFAIL
+
+	# ATTENTION: Ensures a copy of important LLM models is available from puddleJumper . These may be extracted:
+	#ollama show Llama-augment --modelfile
+	_messageNormal '***** ***** ***** ***** ***** custom: researchEngine: AI models'
+	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _setup_researchEngine _setup_models_extra-user'
+
+	
+	_messageNormal '***** ***** ***** ***** ***** custom: iconArt'
+	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/iconArt ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _fetch_iconArt'
+
+
+	! _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
+
+	return 0
+}
+
+
+
+
 
