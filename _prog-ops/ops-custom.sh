@@ -6,6 +6,9 @@ _custom() {
 	functionEntryPWD="$PWD"
 	
 	_start
+
+	# ATTENTION
+	export GH_TOKEN="$GH_TOKEN_publicEquiv_auto"
 	
 	
 	_chroot bash -c 'echo root:$(cat /dev/urandom 2> /dev/null | base64 2> /dev/null | tr -dc a-zA-Z0-9 2> /dev/null | head -c 12 2> /dev/null) | chpasswd'
