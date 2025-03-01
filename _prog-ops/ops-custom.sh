@@ -118,7 +118,7 @@ CZXWXcRMTo8EmM8i4d
 	
 	# DANGER: Though it might be nice to have a copy of Docker images used by researchEngine, it is NOT acceptable to have any unnecessary network services on a puddleJumper .
 	#_messageNormal '***** ***** ***** ***** ***** custom: researchEngine'
-	#! _chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest submodule update --recursive ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _upgrade_researchEngine' && _messageFAIL
+	#! _chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest submodule update --recursive ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _upgrade_researchEngine' && _messageFAIL
 	#_chroot /bin/bash -c '[ -e "'"/home/user/core/data/searxng/settings.yml.rej"'" ]' && _messageFAIL
 
 	# ATTENTION: Ensures a copy of important LLM models is available from puddleJumper . These may be extracted:
@@ -128,7 +128,7 @@ CZXWXcRMTo8EmM8i4d
 
 	
 	_messageNormal '***** ***** ***** ***** ***** custom: iconArt'
-	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/iconArt ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _fetch_iconArt'
+	_chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/iconArt ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _fetch_iconArt'
 
 
 	! _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
@@ -352,17 +352,17 @@ CZXWXcRMTo8EmM8i4d
 	
 	# DANGER: Though it might be nice to have a copy of Docker images used by researchEngine, it is NOT acceptable to have any unnecessary network services on a puddleJumper .
 	#_messageNormal '***** ***** ***** ***** ***** custom: researchEngine'
-	#! _chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest submodule update --recursive ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _upgrade_researchEngine' && _messageFAIL
+	#! _chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest submodule update --recursive ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _upgrade_researchEngine' && _messageFAIL
 	#_chroot /bin/bash -c '[ -e "'"/home/user/core/data/searxng/settings.yml.rej"'" ]' && _messageFAIL
 
 	# ATTENTION: Ensures a copy of important LLM models is available from puddleJumper . These may be extracted:
 	#ollama show Llama-augment --modelfile
 	_messageNormal '***** ***** ***** ***** ***** custom: researchEngine: AI models'
-	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _setup_researchEngine _setup_models_extra-user'
+	_chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/ubiquitous_bash ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _setup_researchEngine _setup_models_extra-user'
 
 	
 	_messageNormal '***** ***** ***** ***** ***** custom: iconArt'
-	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/iconArt ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _fetch_iconArt'
+	_chroot sudo -n --preserve-env=GH_TOKEN --preserve-env=INPUT_GITHUB_TOKEN -u user bash -c 'cd /home/user/core/infrastructure/iconArt ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _fetch_iconArt'
 
 
 	! _closeChRoot && _messagePlain_bad 'fail: closeChroot' && _messageFAIL
