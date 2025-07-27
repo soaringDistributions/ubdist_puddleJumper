@@ -213,7 +213,8 @@ jobs:
         shell: bash
         timeout-minutes: 120
         run: |
-          rm -f ../ubDistBuild-accessories/integrations/ubcp/package_ubcp-core.7z
+          rm -rf ../ubDistBuild-accessories/parts/ubcp/package_ubcp-core/ubcp
+          #rm -f ../ubDistBuild-accessories/integrations/ubcp/package_ubcp-core.7z
           ./ubiquitous_bash.sh _build_ubDistBuild-build
 
       - name: _hash_ubDistBuildExe
@@ -374,7 +375,7 @@ jobs:
           #true
           #! sudo -n apt-get -y clean && exit 1
           #! ./ubiquitous_bash.sh _getMost_debian11_aptSources && exit 1
-          #sudo -n apt-get update
+          sudo -n apt-get update -y
           #! sudo -n apt-get -d install -y virtualbox-7.0 && exit 1
           #! sudo -n ./ubiquitous_bash.sh _getMost_ubuntu24-VBoxManage && exit 1
           sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install --install-recommends -y xvfb
@@ -821,7 +822,7 @@ jobs:
           #../ubiquitous_bash.sh _wget_githubRelease_join-stdout "${{ github.repository }}" "" "package_image_before_noBoot.tar.flx" 2> /dev/null | tee >(../ubiquitous_bash.sh _get_extract_ubDistBuild-tar --extract ./vm.img --to-stdout | env OPENSSL_CONF="/etc/ssl/openssl_legacy.cnf" openssl dgst -whirlpool -binary | xxd -p -c 256 > hash-download.txt) | ../ubiquitous_bash.sh _get_extract_ubDistBuild
           ../ubiquitous_bash.sh _wget_githubRelease-fromTag_join-stdout "${{ github.repository }}" "$currentReleaseTag" "package_image_before_noBoot.tar.flx" | tee >(../ubiquitous_bash.sh _get_extract_ubDistBuild-tar --extract ./vm.img --to-stdout | env OPENSSL_CONF="/etc/ssl/openssl_legacy.cnf" openssl dgst -whirlpool -binary | xxd -p -c 256 > hash-download.txt) | ../ubiquitous_bash.sh _get_extract_ubDistBuild
         env:
-          currentReleaseTag: build-${{ github.run_id }}-9999
+          currentReleaseTag: build_upgrade-${{ github.run_id }}-9999
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
@@ -1357,9 +1358,12 @@ jobs:
           mkdir -p ./_local
           cd ./_local
           rm -f hash-download.txt
-          ../ubiquitous_bash.sh _wget_githubRelease_join-stdout "${{ github.repository }}" "" "package_image.tar.flx" 2> /dev/null | tee >(../ubiquitous_bash.sh _get_extract_ubDistBuild-tar --extract ./vm.img --to-stdout | env OPENSSL_CONF="/etc/ssl/openssl_legacy.cnf" openssl dgst -whirlpool -binary | xxd -p -c 256 > hash-download.txt) | ../ubiquitous_bash.sh _get_extract_ubDistBuild
-        #env:
-          #GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #../ubiquitous_bash.sh _wget_githubRelease_join-stdout "${{ github.repository }}" "" "package_image.tar.flx" 2> /dev/null | tee >(../ubiquitous_bash.sh _get_extract_ubDistBuild-tar --extract ./vm.img --to-stdout | env OPENSSL_CONF="/etc/ssl/openssl_legacy.cnf" openssl dgst -whirlpool -binary | xxd -p -c 256 > hash-download.txt) | ../ubiquitous_bash.sh _get_extract_ubDistBuild
+          ../ubiquitous_bash.sh _wget_githubRelease-fromTag_join-stdout "${{ github.repository }}" "$currentReleaseTag" "package_image.tar.flx" 2> /dev/null | tee >(../ubiquitous_bash.sh _get_extract_ubDistBuild-tar --extract ./vm.img --to-stdout | env OPENSSL_CONF="/etc/ssl/openssl_legacy.cnf" openssl dgst -whirlpool -binary | xxd -p -c 256 > hash-download.txt) | ../ubiquitous_bash.sh _get_extract_ubDistBuild
+        env:
+          currentRepository: ${{ github.repository }}
+          currentReleaseTag: build_upgrade-${{ github.run_id }}-9999
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: fallocate --dig-holes
         if: ${{ github.event.inputs.DISABLE_ROOTFS == 'false' }}
@@ -1571,8 +1575,11 @@ jobs:
           mkdir -p ./_local
           cd ./_local
           rm -f hash-download.txt
-          ../ubiquitous_bash.sh _wget_githubRelease_join-stdout "${{ github.repository }}" "" "package_image.tar.flx" 2> /dev/null | tee >(../ubiquitous_bash.sh _get_extract_ubDistBuild-tar --extract ./vm.img --to-stdout | env OPENSSL_CONF="/etc/ssl/openssl_legacy.cnf" openssl dgst -whirlpool -binary | xxd -p -c 256 > hash-download.txt) | ../ubiquitous_bash.sh _get_extract_ubDistBuild
+          #../ubiquitous_bash.sh _wget_githubRelease_join-stdout "${{ github.repository }}" "" "package_image.tar.flx" 2> /dev/null | tee >(../ubiquitous_bash.sh _get_extract_ubDistBuild-tar --extract ./vm.img --to-stdout | env OPENSSL_CONF="/etc/ssl/openssl_legacy.cnf" openssl dgst -whirlpool -binary | xxd -p -c 256 > hash-download.txt) | ../ubiquitous_bash.sh _get_extract_ubDistBuild
+          ../ubiquitous_bash.sh _wget_githubRelease-fromTag_join-stdout "${{ github.repository }}" "$currentReleaseTag" "package_image.tar.flx" 2> /dev/null | tee >(../ubiquitous_bash.sh _get_extract_ubDistBuild-tar --extract ./vm.img --to-stdout | env OPENSSL_CONF="/etc/ssl/openssl_legacy.cnf" openssl dgst -whirlpool -binary | xxd -p -c 256 > hash-download.txt) | ../ubiquitous_bash.sh _get_extract_ubDistBuild
         env:
+          currentRepository: ${{ github.repository }}
+          currentReleaseTag: build_upgrade-${{ github.run_id }}-9999
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: fallocate --dig-holes
@@ -1870,7 +1877,7 @@ jobs:
           export FORCE_PARALLEL="5"
           ./ubiquitous_bash.sh _hash_ubdist-fast "$currentReleaseTag"
         env:
-          currentReleaseTag: build-${{ github.run_id }}-9999
+          currentReleaseTag: build_upgrade-${{ github.run_id }}-9999
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
@@ -1963,7 +1970,7 @@ jobs:
           #cat ./cronUserReport-$currentReleaseTag
 
           echo
-          _wget_githubRelease-fromTag-fetchReport "$currentRepository" "$currentReleaseTag" "cronUserReport"
+          ./ubiquitous_bash.sh _wget_githubRelease-fromTag-fetchReport "$currentRepository" "$currentReleaseTag" "cronUserReport"
         env:
           currentRepository: ${{ github.repository }}
           currentReleaseTag: build_upgrade-${{ github.run_id }}-9999
@@ -1980,7 +1987,7 @@ jobs:
           #cat ./cronRootReport-$currentReleaseTag
 
           echo
-          _wget_githubRelease-fromTag-fetchReport "$currentRepository" "$currentReleaseTag" "cronRootReport"
+          ./ubiquitous_bash.sh _wget_githubRelease-fromTag-fetchReport "$currentRepository" "$currentReleaseTag" "cronRootReport"
         env:
           currentRepository: ${{ github.repository }}
           currentReleaseTag: build_upgrade-${{ github.run_id }}-9999
@@ -1989,33 +1996,33 @@ jobs:
 
 
       #lsmodReport
-      - name: fetch! binReport coreReport dpkg
+      - name: fetch! binReport coreReport dpkg customReport
         shell: bash
         run: |
           #lsmodReport
-          ./ubiquitous_bash.sh _wget_githubRelease-fromTag-analysisReport-fetch 20 binReport coreReport dpkg
+          ./ubiquitous_bash.sh _wget_githubRelease-fromTag-analysisReport-fetch 20 binReport coreReport dpkg customReport
         env:
           currentRepository: ${{ github.repository }}
           currentReleaseTag: build_upgrade-${{ github.run_id }}-9999
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       #lsmodReport
-      - name: select! binReport coreReport dpkg
+      - name: select! binReport coreReport dpkg customReport
         shell: bash
         run: |
           #lsmodReport
-          ./ubiquitous_bash.sh _wget_githubRelease-fromTag-analysisReport-select binReport coreReport dpkg
+          ./ubiquitous_bash.sh _wget_githubRelease-fromTag-analysisReport-select binReport coreReport dpkg customReport
         env:
           currentRepository: ${{ github.repository }}
           currentReleaseTag: build_upgrade-${{ github.run_id }}-9999
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       #missing-lsmodReport
-      - name: analysis! missing-binReport missing-coreReport missing-dpkg
+      - name: analysis! missing-binReport missing-coreReport missing-dpkg missing-customReport
         shell: bash
         run: |
           #lsmodReport
-          ./ubiquitous_bash.sh _wget_githubRelease-fromTag-analysisReport-analysis 65 binReport coreReport dpkg
+          ./ubiquitous_bash.sh _wget_githubRelease-fromTag-analysisReport-analysis 65 binReport coreReport dpkg customReport
         env:
           currentRepository: ${{ github.repository }}
           currentReleaseTag: build_upgrade-${{ github.run_id }}-9999

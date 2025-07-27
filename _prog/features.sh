@@ -318,7 +318,8 @@ _setup_vm-wsl2_sequence() {
     mkdir -p '/cygdrive/c/core/infrastructure/ubdist_wsl'
     _userMSW _messagePlain_probe wsl --import ubdist '/cygdrive/c/core/infrastructure/ubdist_wsl' "$scriptLocal"/package_rootfs.tar --version 2
     _userMSW wsl --import ubdist '/cygdrive/c/core/infrastructure/ubdist_wsl' "$scriptLocal"/package_rootfs.tar --version 2
-
+    wsl -d "ubdist" sudo -n systemctl disable ollama.service
+    wsl -d "ubdist" sudo -n systemctl stop ollama.service
 
     # Preserve fallback and rootfs if automatic test is successful. Expected to suffice for rebuilding 'ubdist' or other dist/OS from an MSW host if necessary.
     if wsl -d "ubdist" /bin/true > /dev/null 2>&1 && ! wsl -d "ubdist" /bin/false > /dev/null 2>&1 && wsl -d ubdist /home/user/ubiquitous_bash.sh _true && ! wsl -d ubdist /home/user/ubiquitous_bash.sh _false
@@ -331,6 +332,8 @@ _setup_vm-wsl2_sequence() {
         mkdir -p '/cygdrive/c/core/infrastructure/ubdist_wsl_fallback'
         _userMSW _messagePlain_probe wsl --import ubdist_fallback '/cygdrive/c/core/infrastructure/ubdist_wsl_fallback' "$scriptLocal"/package_rootfs.tar --version 2
         _userMSW wsl --import ubdist_fallback '/cygdrive/c/core/infrastructure/ubdist_wsl_fallback' "$scriptLocal"/package_rootfs.tar --version 2
+        wsl -d "ubdist_fallback" sudo -n systemctl disable ollama.service
+        wsl -d "ubdist_fallback" sudo -n systemctl stop ollama.service
 
         if wsl -d "ubdist" /bin/true > /dev/null 2>&1 && ! wsl -d "ubdist" /bin/false > /dev/null 2>&1 && wsl -d ubdist /home/user/ubiquitous_bash.sh _true && ! wsl -d ubdist /home/user/ubiquitous_bash.sh _false
         then
@@ -443,6 +446,15 @@ _setup_vm-wsl2_sequence() {
         fi
         rm -rf /cygdrive/c/core/infrastructure/uwsl-h-b-uninstalled
     fi
+
+
+    wsl -d "ubdist" sudo -n systemctl disable ollama.service
+    wsl -d "ubdist" sudo -n systemctl stop ollama.service
+    wsl -d "ubdist_fallback" sudo -n systemctl disable ollama.service
+    wsl -d "ubdist_fallback" sudo -n systemctl stop ollama.service
+    
+
+    _install_vm-wsl2-portForward ubdist notBooting
     
 
 
@@ -875,6 +887,152 @@ _install_vm-wsl2-kernel() {
         rm -rf "$currentKernelLocationUNIX"-"$currentPreviousKernelID"
     fi
     return 0
+}
+
+
+
+_install_vm-wsl2-portForward() {
+    local current_wsldist
+    current_wsldist="$1"
+    [[ "$current_wsldist" == "" ]] && current_wsldist="ubdist"
+
+    if ! wsl -d "$current_wsldist" echo available | grep available > /dev/null 2>&1
+    then
+        _messagePlain_warn 'warn: _install_vm-wsl2-portForward: wsl: '"$current_wsldist"': missing'
+        #_messageFAIL
+        #_stop 1
+        return 1
+    fi
+
+    local current_wsl_scriptAbsoluteLocation
+    current_wsl_scriptAbsoluteLocation=$(cygpath -m "$scriptAbsoluteLocation")
+    current_wsl_scriptAbsoluteLocation=$(wsl -d "$current_wsldist" wslpath "$current_wsl_scriptAbsoluteLocation")
+
+    local current_wsl_scriptAbsoluteFolder
+    current_wsl_scriptAbsoluteFolder=$(cygpath -m "$scriptAbsoluteFolder")
+    current_wsl_scriptAbsoluteFolder=$(wsl -d "$current_wsldist" wslpath "$current_wsl_scriptAbsoluteFolder")
+
+    if [[ "$2" != "notBooting" ]] && [[ "$2" != "bootingAdmin" ]] && [[ "$2" != "notBootingAdmin" ]]
+    then
+        _messageNormal '_install_vm-wsl2-portForward: booting'
+
+        # TODO: Possibly enable this, if it will not keep the installer from closing and will not close ollama with the installer.
+        ( nohup ollama ls > /dev/null 2>&1 & disown -r "$!" ) > /dev/null
+        sleep 7
+        echo .
+        #-Wait
+        _powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/C','$scriptAbsoluteFolder_msw\_bin.bat','_install_vm-wsl2-portForward','$current_wsldist','bootingAdmin' -Verb RunAs"
+        echo .
+        
+        return 0
+        exit 0
+    fi
+    
+    if [[ "$2" == "bootingAdmin" ]]
+    then
+        _messageNormal '_install_vm-wsl2-portForward: bootingAdmin'
+        
+        local currentIteration
+        echo
+        currentIteration=0
+        for (( currentIteration=0; currentIteration<25; currentIteration++ ))
+        do
+            echo -n .
+            sleep 1
+        done
+        echo
+
+        wsl -d "ubdist" sudo -n systemctl stop hostport-proxy.service
+        wsl -d "ubdist" sudo -n systemctl disable hostport-proxy.service
+        wsl -d "ubdist" sudo -n systemctl stop ollama.service
+        wsl -d "ubdist" sudo -n systemctl disable ollama.service
+
+
+        ( nohup ollama ls > /dev/null 2>&1 & disown -r "$!" ) > /dev/null
+
+
+        echo
+        currentIteration=0
+        for (( currentIteration=0; currentIteration<10; currentIteration++ ))
+        do
+            echo -n .
+            sleep 1
+        done
+        echo
+
+        
+        ( nohup ollama ls > /dev/null 2>&1 & disown -r "$!" ) > /dev/null
+
+
+        echo
+        currentIteration=0
+        for (( currentIteration=0; currentIteration<5; currentIteration++ ))
+        do
+            echo -n .
+            sleep 1
+        done
+        echo
+
+
+        #return 0
+        #exit 0
+    fi
+    
+    if [[ "$2" == "notBootingAdmin" ]]
+    then
+        _messageNormal '_install_vm-wsl2-portForward: notBootingAdmin'
+        
+        local currentIteration
+        echo
+        currentIteration=0
+        for (( currentIteration=0; currentIteration<1; currentIteration++ ))
+        do
+            echo -n .
+            sleep 1
+        done
+        echo
+
+        wsl -d "ubdist" sudo -n systemctl stop hostport-proxy.service
+        wsl -d "ubdist" sudo -n systemctl disable hostport-proxy.service
+        wsl -d "ubdist" sudo -n systemctl stop ollama.service
+        wsl -d "ubdist" sudo -n systemctl disable ollama.service
+
+
+        ( nohup ollama ls > /dev/null 2>&1 & disown -r "$!" ) > /dev/null
+
+
+        echo
+        currentIteration=0
+        for (( currentIteration=0; currentIteration<1; currentIteration++ ))
+        do
+            echo -n .
+            sleep 1
+        done
+        echo
+
+        
+        ( nohup ollama ls > /dev/null 2>&1 & disown -r "$!" ) > /dev/null
+
+
+        echo
+        currentIteration=0
+        for (( currentIteration=0; currentIteration<5; currentIteration++ ))
+        do
+            echo -n .
+            sleep 1
+        done
+        echo
+
+
+        #return 0
+        #exit 0
+    fi
+
+    _setup_wsl2_procedure-fw
+
+    _setup_wsl2_procedure-portproxy "$current_wsldist"
+
+    _setup_wsl2_guest-portForward "$current_wsldist"
 }
 
 

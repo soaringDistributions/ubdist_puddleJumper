@@ -625,7 +625,7 @@ CZXWXcRMTo8EmM8i4d
 	_getMost_backend_aptGetInstall firmware-zd1211
 	_getMost_backend_aptGetInstall firmware-crystalhd
 	_getMost_backend_aptGetInstall firmware-netronome
-	_getMost_backend_aptGetInstall firmware-b43-installer
+	#_getMost_backend_aptGetInstall firmware-b43-installer
 	_getMost_backend_aptGetInstall firmware-bnx2x
 	_getMost_backend_aptGetInstall firmware-ath9k-htc-dbgsym
 	_getMost_backend_aptGetInstall firmware-b43-lpphy-installer
@@ -640,6 +640,32 @@ CZXWXcRMTo8EmM8i4d
 	_getMost_backend_aptGetInstall amd64-microcode
 	_getMost_backend_aptGetInstall intel-microcode
 	_getMost_backend_aptGetInstall iucode-tool
+
+	
+	
+	sudo -n cp "$scriptLib"/setup/debian/b43-fwcutter_019-14_amd64.deb "$globalVirtFS"/
+	if _chroot ls -A -1 /b43-fwcutter_019-14_amd64.deb > /dev/null
+	then
+		_chroot dpkg -i /b43-fwcutter_019-14_amd64.deb
+	else
+		# WARNING: HTTP (as opposed to HTTPS) strongly discouraged.
+		#_chroot wget http://ftp.us.debian.org/debian/pool/non-free/f/firmware-nonfree/b43-fwcutter_019-14_amd64.deb
+		#_chroot wget https://mirrorservice.org/sites/ftp.debian.org/debian/pool/non-free/f/firmware-nonfree/b43-fwcutter_019-14_amd64.deb
+		
+		_chroot dpkg -i ./b43-fwcutter_019-14_amd64.deb
+	fi
+	
+	sudo -n cp "$scriptLib"/setup/debian/firmware-b43-installer_019-14_all.deb "$globalVirtFS"/
+	if _chroot ls -A -1 /firmware-b43-installer_019-14_all.deb > /dev/null
+	then
+		_chroot dpkg -i /firmware-b43-installer_019-14_all.deb
+	else
+		# WARNING: HTTP (as opposed to HTTPS) strongly discouraged.
+		#_chroot wget http://ftp.us.debian.org/debian/pool/non-free/f/firmware-nonfree/firmware-b43-installer_019-14_all.deb
+		#_chroot wget https://mirrorservice.org/sites/ftp.debian.org/debian/pool/non-free/f/firmware-nonfree/firmware-b43-installer_019-14_all.deb
+		
+		_chroot dpkg -i ./firmware-b43-installer_019-14_all.deb
+	fi
 	
 	
 	_getMost_backend_aptGetInstall firmware-ipw2x00
@@ -866,6 +892,11 @@ _create_ubDistBuild-rotten_install() {
 	
 	! "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
 	imagedev=$(cat "$scriptLocal"/imagedev)
+
+
+	_getMost_backend apt-get -y remove langford-dkms
+	_getMost_backend apt-get -y purge langford-dkms
+
 	
 	[[ ! -e "$scriptLib"/ubiquitous_bash/_lib/kit/install/cloud/cloud-init/zRotten/zMinimal/rotten_install.sh ]] && _messageFAIL
 	sudo -n cp -f "$scriptLib"/ubiquitous_bash/_lib/kit/install/cloud/cloud-init/zRotten/zMinimal/rotten_install.sh "$globalVirtFS"/rotten_install.sh
@@ -1230,6 +1261,7 @@ _create_ubDistBuild-rotten_install-core() {
 
 	# Apparent suggested/recommends/etc of gnuradio, which as another bad dkms thing, has been found to apparently break several critically essential things: apt , linux kernel , initramfs , live boot .
 	_getMost_backend apt-get -y remove langford-dkms
+	_getMost_backend apt-get -y purge langford-dkms
 
 	_chroot sudo -n -u user bash -c 'cd /home/user/core/installations/gr-pipe ; mkdir -p ./build ; cd ./build ; cmake .. ; make ; sudo -n make install'
 
@@ -1259,6 +1291,9 @@ _create_ubDistBuild-rotten_install-core() {
 
 
 	_getMost_backend_aptGetInstall hamradio-sdr
+	#_getMost_backend env DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install --no-install-recommends -y hamradio-sdr
+	_getMost_backend apt-get -y remove langford-dkms
+	_getMost_backend apt-get -y purge langford-dkms
 
 	_getMost_backend_aptGetInstall airspy
 	_getMost_backend_aptGetInstall bladerf
@@ -1289,6 +1324,9 @@ _create_ubDistBuild-rotten_install-core() {
 	_getMost_backend_aptGetInstall libhackrf-dev
 	_getMost_backend_aptGetInstall hackrf-doc
 	_getMost_backend_aptGetInstall librtlsdr-dev
+	
+	_getMost_backend apt-get -y remove langford-dkms
+	_getMost_backend apt-get -y purge langford-dkms
 	
 
 	_getMost_backend apt-get remove -y xtrx-dkms
@@ -1348,6 +1386,9 @@ _create_ubDistBuild-rotten_install-core() {
 	
 	_getMost_backend_aptGetInstall sloccount
 	
+	_getMost_backend apt-get -y remove langford-dkms
+	_getMost_backend apt-get -y purge langford-dkms
+	
 	
 	# May not be usable with VirtualBox compatible kernel .
 	# May break:
@@ -1400,6 +1441,10 @@ _create_ubDistBuild-rotten_install-core() {
 	_getMost_backend_aptGetInstall yakuake
 	
 	
+	
+	_getMost_backend_aptGetInstall asciinema
+	
+	
 	# Recommend 'pv' , 'stdbuf' , etc, instead, available for both ubdist/OS (ie. UNIX/Linux), as well as Cygwin/MSW .
 	#_getMost_backend_aptGetInstall buffer
 	#_getMost_backend_aptGetInstall mbuffer
@@ -1409,6 +1454,14 @@ _create_ubDistBuild-rotten_install-core() {
 	
 	_getMost_backend apt-get -y clean
 
+
+	#codex
+	#claude
+	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubDistBuild ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest submodule update --recursive ; ./ubiquitous_bash.sh _setup_codex ; ./ubiquitous_bash.sh _setup_claude_code'
+
+	
+	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure/ubDistBuild ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest pull ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _gitBest submodule update --recursive ; ./ubiquitous_bash.sh _setup_asciinema_convert'
+
 	
 
 	# Alternative generated by ChatGPT 3.5 2023-08-14 . Discouraged unless git tags are not well maintained.
@@ -1417,6 +1470,11 @@ _create_ubDistBuild-rotten_install-core() {
 	#--shallow-since="Fri Jan 13 12:43:26 2023 +0000"
 	#_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure ; rmdir WSL2-Linux-Kernel ; git config --global checkout.workers -1 ; git clone --depth 1 --no-checkout "https://github.com/microsoft/WSL2-Linux-Kernel.git"'
 	_chroot sudo -n -u user bash -c 'cd /home/user/core/infrastructure ; rmdir WSL2-Linux-Kernel ; git config --global checkout.workers -1 ; git clone --depth 1 --no-checkout --branch $(git ls-remote --tags https://github.com/microsoft/WSL2-Linux-Kernel.git | cut -f2 | sed "s/refs\/tags\///g" | grep linux-msft-wsl | sort -V -r | head -n1 | tr -dc "a-zA-Z0-9.:\-_") "https://github.com/microsoft/WSL2-Linux-Kernel.git"'
+
+
+
+	_chroot sudo -n -u user bash -c 'cd /home/user/core/installations/huggingface_cli ; chmod 755 ./ubiquitous_bash.sh ; ./ubiquitous_bash.sh _huggingface_cli -h'
+	
 
 	
 	# WARNING: May be untested.
@@ -1789,6 +1847,7 @@ CZXWXcRMTo8EmM8i4d
 
 	# Have been known to apparently break several critically essential things: apt , linux kernel , initramfs , live boot . Redundant remove commands are placed here.
 	_getMost_backend apt-get -y remove langford-dkms
+	_getMost_backend apt-get -y purge langford-dkms
 	
 	_getMost_backend apt-get -y clean
 	
@@ -2278,6 +2337,21 @@ _package_ubDistBuild_rootfs() {
 	_set_ubDistBuild
 	
 	rm -f "$scriptLocal"/package_rootfs.tar.flx > /dev/null 2>&1
+
+	
+	cd "$scriptLocal"
+	! "$scriptAbsoluteLocation" _openChRoot && _messagePlain_bad 'fail: _openChRoot' && _messageFAIL
+
+	# If systemctl is usable when 'booting' an instance of 'rootfs', this is usually WSL2, and some services (eg. ollama) could conflict with the host.
+	# Else, if systemctl is not usable, this is usually Docker containers, etc, and such services can be started as needed (ie. _service_ollama_augment ).
+
+	_chroot sudo -n systemctl disable ollama
+	_chroot systemctl disable ollama.service
+	_chroot sudo -n systemctl stop ollama
+	_chroot systemctl stop ollama.service
+
+	! "$scriptAbsoluteLocation" _closeChRoot && _messagePlain_bad 'fail: _closeChRoot' && _messageFAIL
+
 	
 	cd "$scriptLocal"
 	! "$scriptAbsoluteLocation" _openImage && _messagePlain_bad 'fail: _openImage' && _messageFAIL
@@ -3799,6 +3873,8 @@ _refresh_anchors() {
 	cp -a "$scriptAbsoluteFolder"/_anchor.bat "$scriptAbsoluteFolder"/_install_vm-wsl2.bat
 	cp -a "$scriptAbsoluteFolder"/_anchor.bat "$scriptAbsoluteFolder"/_uninstall_vm-wsl2.bat
 	cp -a "$scriptAbsoluteFolder"/_anchor.bat "$scriptAbsoluteFolder"/_install_vm-wsl2-kernel.bat
+	
+	cp -a "$scriptAbsoluteFolder"/_anchor.bat "$scriptAbsoluteFolder"/_install_vm-wsl2-portForward.bat
 
 	cp -a "$scriptAbsoluteFolder"/_anchor.bat "$scriptAbsoluteFolder"/_sshid-import-wsl2.bat
 	cp -a "$scriptAbsoluteFolder"/_anchor.bat "$scriptAbsoluteFolder"/_sshid-export-wsl2.bat
